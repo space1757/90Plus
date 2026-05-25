@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90Plus | 축구 그 이상의 가치</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#d4ff00',
+                        darkbg: '#0b0f19',
+                        cardbg: '#161e31',
+                        cardhover: '#1e2942',
+                        bordercolor: '#242f4d',
+                        mutedtext: '#94a3b8',
+                        darkgray: '#64748b'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-950">
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="bg-darkbg border-b border-bordercolor sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+                <span class="text-brand font-black text-2xl tracking-tighter">90 plus</span>
+                <span class="text-brand font-bold text-lg select-none">+</span>
+            </div>
+            
+            <div class="flex items-center gap-4 text-white">
+                <!-- Search Button -->
+                <button id="btn-search-toggle" class="hover:text-brand transition-colors p-1" aria-label="검색">
+                    <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="none" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </button>
+                <!-- Notification Button -->
+                <button id="btn-notify" class="hover:text-brand transition-colors p-1 relative" aria-label="알림">
+                    <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-brand rounded-full"></span>
+                </button>
+                <!-- Settings Button -->
+                <button id="btn-settings" class="hover:text-brand transition-colors p-1" aria-label="설정">
+                    <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- SEARCH BAR (COLLAPSIBLE) -->
+        <div id="search-bar-container" class="hidden bg-darkbg border-b border-bordercolor p-4 transition-all duration-300">
+            <div class="relative flex items-center">
+                <input type="text" id="search-input" placeholder="키워드나 팀, 기자를 검색하세요..." 
+                       class="w-full bg-cardbg text-white border border-bordercolor rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                <svg class="w-5 h-5 text-darkgray absolute left-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <button id="btn-search-clear" class="absolute right-3 text-darkgray hover:text-white hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- DYNAMIC TOP NAVIGATION (TABS / FILTER) -->
+        <nav id="top-nav" class="bg-darkbg border-b border-bordercolor overflow-x-auto no-scrollbar py-3 px-4 sticky top-[53px] z-30">
+            <!-- 탭 종류에 따라 동적으로 내용(날짜 스크롤러 vs 카테고리 칩)이 교체되거나 노출됩니다 -->
+            <div id="top-nav-content" class="flex gap-2"></div>
+        </nav>
+
+        <!-- MAIN FEED -->
+        <main class="flex-1 px-4 py-5 mb-24 overflow-y-auto">
+            <div id="tab-content" class="flex flex-col gap-4">
+                <!-- Javascript를 통해 동적으로 각 탭의 콘텐츠가 마운트됩니다. -->
+            </div>
+        </main>
+
+        <!-- FOOTER BOTTOM TAB BAR -->
+        <footer class="fixed bottom-0 left-0 right-0 bg-darkbg border-t border-bordercolor py-2.5 z-40">
+            <div class="max-w-[600px] mx-auto flex justify-around items-center text-xs">
+                <!-- 경기 탭 -->
+                <button id="tab-matches" class="flex flex-col items-center gap-1 text-darkgray hover:text-white transition-colors py-1 px-4 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="font-medium text-[11px]">경기</span>
+                </button>
+                <!-- 뉴스 탭 -->
+                <button id="tab-news" class="flex flex-col items-center gap-1 text-brand font-bold py-1 px-4 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 4a2 2 0 012 2v7a2 2 0 01-2 2H9a2 2 0 01-2-2v-1"></path>
+                    </svg>
+                    <span class="text-[11px]">뉴스</span>
+                </button>
+                <!-- 리그 탭 -->
+                <button id="tab-leagues" class="flex flex-col items-center gap-1 text-darkgray hover:text-white transition-colors py-1 px-4 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                    </svg>
+                    <span class="font-medium text-[11px]">리그</span>
+                </button>
+                <!-- MY(팔로잉) 탭 -->
+                <button id="tab-following" class="flex flex-col items-center gap-1 text-darkgray hover:text-white transition-colors py-1 px-4 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <span class="font-medium text-[11px]">팔로잉</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- DETAILS DRAWER (BOTTOM SHEET) -->
+    <div id="backdrop" class="bottom-sheet-backdrop"></div>
+    <div id="bottom-sheet" class="bottom-sheet">
+        <!-- Drawer Header/Handle -->
+        <div class="flex justify-center py-3.5 cursor-pointer" id="btn-close-sheet-drag">
+            <div class="w-12 h-1.5 bg-gray-700 rounded-full"></div>
+        </div>
+        <!-- Drawer Contents -->
+        <div class="px-6 pb-8 overflow-y-auto max-h-[80vh]" id="bottom-sheet-content">
+            <!-- 뉴스 세부 콘텐츠가 동적으로 삽입됩니다. -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
