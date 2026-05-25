@@ -80,7 +80,7 @@
 
         <!-- DYNAMIC TOP NAVIGATION (TABS / FILTER) -->
         <nav id="top-nav" class="bg-darkbg border-b border-bordercolor overflow-x-auto no-scrollbar py-3 px-4 sticky top-[53px] z-30">
-            <!-- 탭 종류에 따라 동적으로 내용이 교체되거나 노출됩니다 -->
+            <!-- 탭 종류에 따라 동적으로 내용(날짜 스크롤러 vs 카테고리 칩)이 교체되거나 노출됩니다 -->
             <div id="top-nav-content" class="flex gap-2"></div>
         </nav>
 
@@ -129,7 +129,7 @@
     <!-- DETAILS DRAWER (BOTTOM SHEET) -->
     <div id="backdrop" class="bottom-sheet-backdrop"></div>
     <div id="bottom-sheet" class="bottom-sheet">
-        <!-- Drawer Handle -->
+        <!-- Drawer Header/Handle -->
         <div class="flex justify-center py-3.5 cursor-pointer" id="btn-close-sheet-drag">
             <div class="w-12 h-1.5 bg-gray-700 rounded-full"></div>
         </div>
@@ -140,6 +140,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

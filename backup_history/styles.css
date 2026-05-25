@@ -1,0 +1,157 @@
+/* 90plus Custom Style Sheet */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
+  --bg-color: #0b0f19;
+  --card-bg: #161e31;
+  --card-hover: #1e2942;
+  --border-color: #242f4d;
+  --point-color: #d4ff00;
+  --point-rgb: 212, 255, 0;
+  --live-color: #ff4b4b;
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --text-dark: #64748b;
+}
+
+body {
+  font-family: 'Pretendard', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dark);
+}
+
+/* Base Layout Config */
+.app-container {
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+  position: relative;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+/* Glowing Border Utilities */
+.glow-border {
+  position: relative;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+              linear-gradient(135deg, var(--point-color), rgba(212, 255, 0, 0.2)) border-box;
+  box-shadow: 0 0 15px rgba(212, 255, 0, 0.15);
+}
+
+.glow-border-orange {
+  position: relative;
+  border: 1px solid transparent;
+  background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
+              linear-gradient(135deg, #ff9f00, rgba(255, 159, 0, 0.2)) border-box;
+  box-shadow: 0 0 15px rgba(255, 159, 0, 0.2);
+}
+
+/* Pulse animation for Live matches */
+@keyframes pulse-light {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-live {
+  animation: pulse-light 1.5s infinite;
+}
+
+/* Shimmer Animation for Skeleton Loader */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, #161e31 25%, #202b46 37%, #161e31 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+/* Custom Bottom Sheet / Modal Drawer */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #121826;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border-top: 1px solid var(--border-color);
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+}
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+.bottom-sheet-backdrop {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(5, 7, 12, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.bottom-sheet-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tactician Pitch Styling */
+.pitch-bg {
+  background: linear-gradient(180deg, #0e271c 0%, #06150e 100%);
+  border: 1.5px solid #143b29;
+  position: relative;
+  overflow: hidden;
+}
+.pitch-center-circle {
+  border: 1.5px solid rgba(20, 59, 41, 0.7);
+}
+.pitch-line {
+  border-color: rgba(20, 59, 41, 0.7);
+}
+
+/* Horizontal scroll hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

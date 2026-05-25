@@ -1,4 +1,4 @@
-/* 90plus Custom Style Sheet */
+/* 90plus Premium Dark Sports Theme Custom Style Sheet */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
 :root {
@@ -7,40 +7,46 @@
   --card-hover: #1e2942;
   --border-color: #242f4d;
   --point-color: #d4ff00;
-  --point-rgb: 212, 255, 0;
-  --live-color: #ff4b4b;
-  --text-main: #ffffff;
   --text-muted: #94a3b8;
   --text-dark: #64748b;
+  --orange-glow: #ff9f00;
 }
 
 body {
-  font-family: 'Pretendard', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
   background-color: var(--bg-color);
-  color: var(--text-main);
-  margin: 0;
-  padding: 0;
+  color: #ffffff;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Custom Scrollbar */
+/* Scrollbar Custom */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-color);
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 3px;
+  border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dark);
 }
 
-/* Base Layout Config */
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* App Container Mobile First */
 .app-container {
   max-width: 600px;
   margin: 0 auto;
@@ -48,110 +54,120 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
   position: relative;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-  border-left: 1px solid var(--border-color);
-  border-right: 1px solid var(--border-color);
 }
 
-/* Glowing Border Utilities */
+/* Glassmorphism Utility */
+.glass-effect {
+  background: rgba(22, 30, 49, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px border var(--border-color);
+}
+
+/* Premium Glow Borders */
 .glow-border {
   position: relative;
-  border: 1px solid transparent;
-  background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
-              linear-gradient(135deg, var(--point-color), rgba(212, 255, 0, 0.2)) border-box;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glow-border:hover {
+  border-color: var(--point-color);
   box-shadow: 0 0 15px rgba(212, 255, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .glow-border-orange {
   position: relative;
-  border: 1px solid transparent;
-  background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
-              linear-gradient(135deg, #ff9f00, rgba(255, 159, 0, 0.2)) border-box;
-  box-shadow: 0 0 15px rgba(255, 159, 0, 0.2);
+  border: 1px solid rgba(255, 159, 0, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glow-border-orange:hover {
+  border-color: var(--orange-glow);
+  box-shadow: 0 0 20px rgba(255, 159, 0, 0.25);
+  transform: translateY(-2px);
 }
 
-/* Pulse animation for Live matches */
-@keyframes pulse-light {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-.pulse-live {
-  animation: pulse-light 1.5s infinite;
-}
-
-/* Shimmer Animation for Skeleton Loader */
-@keyframes skeleton-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-.skeleton {
-  background: linear-gradient(90deg, #161e31 25%, #202b46 37%, #161e31 63%);
-  background-size: 400% 100%;
-  animation: skeleton-shimmer 1.4s ease infinite;
-}
-
-/* Custom Bottom Sheet / Modal Drawer */
-.bottom-sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #121826;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
-  border-top: 1px solid var(--border-color);
-  z-index: 100;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  max-width: 600px;
-  margin: 0 auto;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
-}
-.bottom-sheet.open {
-  transform: translateY(0);
-}
-.bottom-sheet-backdrop {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(5, 7, 12, 0.7);
-  backdrop-filter: blur(4px);
-  z-index: 99;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-.bottom-sheet-backdrop.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Tactician Pitch Styling */
+/* Soccer Tactic Pitch BG */
 .pitch-bg {
-  background: linear-gradient(180deg, #0e271c 0%, #06150e 100%);
+  background: linear-gradient(135deg, #0f2d1e 0%, #061b11 100%);
   border: 1.5px solid #143b29;
   position: relative;
   overflow: hidden;
 }
 .pitch-center-circle {
-  border: 1.5px solid rgba(20, 59, 41, 0.7);
-}
-.pitch-line {
-  border-color: rgba(20, 59, 41, 0.7);
+  border: 1px dashed rgba(212, 255, 0, 0.15);
 }
 
-/* Horizontal scroll hide scrollbar */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #161e31 25%, #1e2942 50%, #161e31 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@keyframes loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Pulse LIVE Badge */
+.pulse-live {
+  position: relative;
+}
+.pulse-live::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  background-color: currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse-animation 1.5s infinite;
+}
+.pulse-live {
+  padding-left: 16px !important;
+}
+@keyframes pulse-animation {
+  0% { transform: translateY(-50%) scale(0.95); opacity: 1; }
+  50% { transform: translateY(-50%) scale(1.6); opacity: 0.3; }
+  100% { transform: translateY(-50%) scale(0.95); opacity: 1; }
+}
+
+/* Bottom Details Drawer (Bottom Sheet) */
+.bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 50;
+}
+.bottom-sheet-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  width: 100%;
+  max-width: 600px;
+  background-color: #0b0f19;
+  border-top: 1.5px solid var(--border-color);
+  border-radius: 24px 24px 0 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 60;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+.bottom-sheet.open {
+  transform: translate(-50%, 0);
 }
