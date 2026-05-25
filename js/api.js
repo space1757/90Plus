@@ -51,7 +51,7 @@ export async function loadNews() {
             let isHereWeGo = parsedJson?.is_here_we_go || item.is_here_we_go || false;
             let category = parsedJson?.category || item.category || "최신뉴스";
             let summaryPoints = parsedJson?.summary || [];
-            let tacticGrade = parsedJson?.tactic_grade || null;
+            let tacticGradeObj = parsedJson?.tactic_grade || tacticGrade || null;
 
             if (!parsedJson) {
                 if (contentText.includes("살라")) {
@@ -64,7 +64,7 @@ export async function loadNews() {
                 } else if (contentText.includes("다비즈")) {
                     title = "에드가 다비즈, 반즐리 FC 시절 전술 및 감독 커리어 회고";
                     category = "전술분석";
-                    tacticGrade = { managerA: { name: "에드가 다비즈", grade: "B+" }, managerB: { name: "반즐리 전술진", grade: "B-" } };
+                    tacticGradeObj = { managerA: { name: "에드가 다비즈", grade: "B+" }, managerB: { name: "반즐리 전술진", grade: "B-" } };
                 }
             }
 
@@ -75,8 +75,8 @@ export async function loadNews() {
                 is_here_we_go: isHereWeGo,
                 category,
                 summary_points: summaryPoints,
-                tactic_grade,
-                tactic_summary: tacticGrade ? "🏆 가변 3-4-3 빌드업" : null
+                tactic_grade: tacticGradeObj,
+                tactic_summary: tacticGradeObj ? "🏆 가변 3-4-3 빌드업" : null
             };
         });
 
