@@ -440,6 +440,21 @@
 
             <!-- Form 3: Match Result Registration (Initially Hidden) -->
             <form id="form-admin-match-result" class="space-y-4 hidden">
+                <!-- AI 스마트 경기 결과 자동 기입 패널 -->
+                <div class="bg-darkbg/50 border border-brand/20 rounded-xl p-3.5 space-y-2">
+                    <label class="block text-[11px] font-bold text-brand flex items-center gap-1">
+                        <span>🪄</span> AI 실시간 경기 결과 자동 추출 (Google Search)
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="ai-match-query" placeholder="예: 어제 아스날 대 리버풀 경기 결과 채워줘" 
+                               class="flex-1 bg-cardbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors">
+                        <button type="button" id="btn-ai-extract-match" class="bg-brand text-black text-xs font-black px-3.5 py-2 rounded-xl transition-all hover:bg-brand/80 active:scale-95">
+                            자동 기입
+                        </button>
+                    </div>
+                    <p class="text-[9px] text-mutedtext">※ 제미나이가 실시간 검색을 통해 스코어와 득점 기록을 분석해 아래 입력 폼을 자동으로 채워줍니다.</p>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-mutedtext mb-1.5">대회 구분</label>

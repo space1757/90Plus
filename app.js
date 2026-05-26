@@ -664,6 +664,65 @@ async function generateAiArticle(apiKey, title, outline) {
     }
 }
 
+async function generateAiMatchResult(apiKey, query) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    
+    const systemPrompt = `
+당신은 대한민국 최고의 스포츠 매거진 '90PLUS⁺'의 경기 기록 자동 분석 시스템입니다.
+사용자가 요청한 축구 경기에 대한 정보를 구글 검색을 통해 실시간으로 탐색한 뒤, 아래 약속된 JSON 규격으로 경기 결과를 완벽하고 무결한 팩트 데이터로 추출해야 합니다.
+허위 사실이나 아직 치러지지 않은 경기에 대한 가짜 예측 스코어가 절대 들어가지 않도록 극도로 주의하십시오.
+
+[구단명 맵핑 매칭 약속 규칙]
+EPL 구단명은 반드시 다음 20개 이름 중 하나로 정확하게 매핑하여 반환해야 합니다:
+"아스날", "맨시티", "맨유", "애스턴 빌라", "리버풀", "본머스", "선덜랜드", "브라이턴", "브렌트퍼드", "첼시", "풀럼", "뉴캐슬", "에버턴", "리즈 유나이티드", "크리스털 팰리스", "노팅엄 포레스트", "토트넘", "웨스트 햄", "번리", "울브스"
+
+[출력 JSON 구조 규격]
+출력은 마크다운 기호(\`\`\`json) 등 부가 설명 없이 오직 순수한 아래 구조의 JSON 객체 하나여야 합니다:
+{
+    "league": "프리미어리그" | "챔피언스리그" | "유로파리그" | "FA컵" 중 하나 (가장 어울리는 대회 선택),
+    "round": "예시: 26-27시즌 1라운드",
+    "home": "EPL 20개 구단명 중 홈 구단",
+    "away": "EPL 20개 구단명 중 원정 구단",
+    "homeScore": 홈팀 득점 수 (정수),
+    "awayScore": 원정팀 득점 수 (정수),
+    "comment": "예시: 아스날: 사카 45' (PK) | 리버풀: 살라 72' (도움: 누녜스)" 형식의 골 기록 및 경기 요약 (실제 득점 선수의 한글 이름과 시간대를 구글 실시간 검색 기반으로 완벽 검증하여 포함할 것)
+}
+`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{ text: `검색어: "${query}"\n\n위 검색어에 부합하는 경기를 구글 검색을 통해 실시간 탐색하여, 가장 신뢰성 높은 최신 경기결과 정보로 JSON을 생성해줘.` }]
+            }],
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+            tools: [{ google_search: {} }], // Google Search Grounding Enabled!
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Gemini API 통신 장애: HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!responseText) {
+        throw new Error("Gemini로부터 경기 결과 팩트를 추출하지 못했습니다.");
+    }
+
+    try {
+        return JSON.parse(responseText.trim());
+    } catch (e) {
+        throw new Error("Gemini 응답 JSON 파싱 실패: " + e.message);
+    }
+}
+
 async function deleteArticle(id, event) {
     if (event) event.stopPropagation();
     
@@ -980,6 +1039,69 @@ function setupAdminPanelEvents() {
                 loadNews();
             } catch (err) {
                 alert(`❌ 경기 결과 발행 실패: ${err.message}`);
+            }
+        });
+    }
+
+    // Form 3: AI Smart Match Result Extractor Event Handler
+    const btnAiExtractMatch = document.getElementById('btn-ai-extract-match');
+    if (btnAiExtractMatch) {
+        btnAiExtractMatch.addEventListener('click', async () => {
+            const query = document.getElementById('ai-match-query').value.trim();
+            const apiKey = localStorage.getItem('90plus_gemini_key') || '';
+
+            if (!apiKey) {
+                alert("🔑 AI 자동 추출을 사용하려면 먼저 관리자 콘솔 상단에 Gemini API Key를 입력하고 저장해 주세요!");
+                return;
+            }
+            if (!query) {
+                alert("🪄 분석할 경기 결과 관련 검색어(예: 어제 아스날 대 리버풀 경기 결과)를 입력해 주세요.");
+                return;
+            }
+
+            btnAiExtractMatch.disabled = true;
+            btnAiExtractMatch.textContent = "추출 중...";
+            btnAiExtractMatch.className = "bg-teal-800 text-teal-400 text-xs font-black px-3.5 py-2 rounded-xl cursor-not-allowed";
+
+            try {
+                const matchResult = await generateAiMatchResult(apiKey, query);
+
+                // Auto-populate the manual fields!
+                const leagueEl = document.getElementById('match-league');
+                const roundEl = document.getElementById('match-round');
+                const homeEl = document.getElementById('match-home-team');
+                const homeScoreEl = document.getElementById('match-home-score');
+                const awayEl = document.getElementById('match-away-team');
+                const awayScoreEl = document.getElementById('match-away-score');
+                const commentEl = document.getElementById('match-comment');
+
+                if (leagueEl && matchResult.league) {
+                    const matchesOption = Array.from(leagueEl.options).some(opt => opt.value === matchResult.league);
+                    if (matchesOption) leagueEl.value = matchResult.league;
+                }
+                if (roundEl && matchResult.round) roundEl.value = matchResult.round;
+                
+                // Align team name selectors
+                if (homeEl && matchResult.home) {
+                    const matchedOption = Array.from(homeEl.options).find(opt => opt.value.includes(matchResult.home) || matchResult.home.includes(opt.value));
+                    if (matchedOption) homeEl.value = matchedOption.value;
+                }
+                if (awayEl && matchResult.away) {
+                    const matchedOption = Array.from(awayEl.options).find(opt => opt.value.includes(matchResult.away) || matchResult.away.includes(opt.value));
+                    if (matchedOption) awayEl.value = matchedOption.value;
+                }
+
+                if (homeScoreEl && matchResult.homeScore !== undefined) homeScoreEl.value = matchResult.homeScore;
+                if (awayScoreEl && matchResult.awayScore !== undefined) awayScoreEl.value = matchResult.awayScore;
+                if (commentEl && matchResult.comment) commentEl.value = matchResult.comment;
+
+                alert("🪄 AI가 실시간 구글 검색으로 경기 결과 팩트를 완벽하게 추출하여 하단 입력 폼에 기입했습니다!\n\n내용에 허위 사실이나 오류가 없는지 눈으로 검증 및 수정하신 뒤 [⚽ 경기 결과 등록 발행]을 눌러 최종 발행해 주세요.");
+            } catch (err) {
+                alert(`❌ AI 경기 결과 자동 추출 실패: ${err.message}\n(입력하신 경기 일정에 대한 정보가 구글 검색에 아직 부재하거나 올바르지 않은 API Key일 수 있습니다.)`);
+            } finally {
+                btnAiExtractMatch.disabled = false;
+                btnAiExtractMatch.textContent = "자동 기입";
+                btnAiExtractMatch.className = "bg-brand text-black text-xs font-black px-3.5 py-2 rounded-xl transition-all hover:bg-brand/80 active:scale-95";
             }
         });
     }
