@@ -74,6 +74,40 @@ const mockNews = [
             "새로운 계약에는 큰 폭의 주급 인상 및 프리미엄 대우 포함 전망.",
             "포스테코글루 감독은 손흥민의 구단 내 영향력을 절대적으로 높게 평가함."
         ]
+    },
+    {
+        id: 'mock-match-1',
+        created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        category: "경기결과",
+        is_match_result: true,
+        league: "프리미어리그",
+        round: "26-27시즌 1라운드",
+        home: "아스날",
+        away: "리버풀",
+        homeScore: 1,
+        awayScore: 1,
+        comment: "아스날: 부카요 사카 45' (PK) | 리버풀: 모하메드 살라 72' (도움: 다윈 누녜스). 개막전부터 격돌한 두 우승 후보의 불꽃튀는 난타전.",
+        reporter: "Fabrizio Romano",
+        tier: 1,
+        title: "아스날 1 : 1 리버풀",
+        content: "26-27시즌 프리미어리그 1라운드 경기결과 - 홈팀 아스날과 원정팀 리버풀의 치열한 공방전 끝에 1 대 1로 경기가 마무리되었습니다."
+    },
+    {
+        id: 'mock-match-2',
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        category: "경기결과",
+        is_match_result: true,
+        league: "챔피언스리그",
+        round: "25-26시즌 결승전",
+        home: "맨시티",
+        away: "레알",
+        homeScore: 3,
+        awayScore: 2,
+        comment: "맨시티: 홀란 12', 더 브라위너 55', 포든 89' | 레알: 비니시우스 33', 벨링엄 67'. 엘링 홀란의 선제골과 필 포든의 극장골로 맨체스터 시티가 빅이어를 들어올렸습니다.",
+        reporter: "Guillaume Balague",
+        tier: 1,
+        title: "맨시티 3 : 2 레알",
+        content: "챔피언스리그 결승전 경기결과 - 홈팀 맨체스터 시티와 원정팀 레알 마드리드의 치열한 공방전 끝에 3 대 2로 맨시티가 우승했습니다."
     }
 ];
 
@@ -180,6 +214,7 @@ async function loadNews() {
             let reporter = parsedJson?.reporter || item.reporter || "90PLUS 뉴스";
             let tier = parsedJson?.tier || item.tier || 3;
             let isHereWeGo = parsedJson?.is_here_we_go || item.is_here_we_go || false;
+            let isMatchResult = parsedJson?.is_match_result || false;
             let category = parsedJson?.category || item.category || "최신뉴스";
             let summaryPoints = parsedJson?.summary || [];
             let transferInfo = parsedJson?.transfer_info || item.transfer_info || null;
@@ -202,10 +237,19 @@ async function loadNews() {
                 created_at: item.created_at,
                 title, content, reporter, tier,
                 is_here_we_go: isHereWeGo,
+                is_match_result: isMatchResult,
                 category,
                 summary_points: summaryPoints,
                 transfer_info: transferInfo,
-                tag: tag
+                tag: tag,
+                // Match Results Fields Mapping
+                league: parsedJson?.league || null,
+                round: parsedJson?.round || null,
+                home: parsedJson?.home || null,
+                away: parsedJson?.away || null,
+                homeScore: parsedJson?.homeScore !== undefined ? parsedJson.homeScore : null,
+                awayScore: parsedJson?.awayScore !== undefined ? parsedJson.awayScore : null,
+                comment: parsedJson?.comment || null
             };
         });
 
@@ -665,7 +709,10 @@ function triggerFavTeamAlert() {
     if (!myTeam) return;
 
     const hasMyTeamNews = state.newsData.some(item => 
-        item.title.includes(myTeam) || item.content.includes(myTeam)
+        item.tag === myTeam ||
+        (item.is_match_result && (item.home === myTeam || item.away === myTeam)) ||
+        item.title.includes(myTeam) || 
+        item.content.includes(myTeam)
     );
 
     if (hasMyTeamNews) {
@@ -692,18 +739,33 @@ function setupAdminPanelEvents() {
         });
     }
 
-    if (tabWrite && tabTransfer && formAdminNews && formAdminTransfer) {
+    const tabMatchResult = document.getElementById('admin-tab-match-result');
+    const formAdminMatchResult = document.getElementById('form-admin-match-result');
+
+    if (tabWrite && tabTransfer && tabMatchResult && formAdminNews && formAdminTransfer && formAdminMatchResult) {
         tabWrite.addEventListener('click', () => {
             tabWrite.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
             tabTransfer.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            tabMatchResult.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             formAdminNews.classList.remove('hidden');
             formAdminTransfer.classList.add('hidden');
+            formAdminMatchResult.classList.add('hidden');
         });
         tabTransfer.addEventListener('click', () => {
             tabTransfer.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
             tabWrite.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            tabMatchResult.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             formAdminTransfer.classList.remove('hidden');
             formAdminNews.classList.add('hidden');
+            formAdminMatchResult.classList.add('hidden');
+        });
+        tabMatchResult.addEventListener('click', () => {
+            tabMatchResult.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
+            tabWrite.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            tabTransfer.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            formAdminMatchResult.classList.remove('hidden');
+            formAdminNews.classList.add('hidden');
+            formAdminTransfer.classList.add('hidden');
         });
     }
 
@@ -859,12 +921,65 @@ function setupAdminPanelEvents() {
 
                 alert("🚨 HERE WE GO! 선수 이적 정보 카드가 즉시 등록 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
-                formAdminTransfer.reset();
                 const transTagSelect = document.getElementById('transfer-tag');
                 if (transTagSelect) transTagSelect.value = '';
                 loadNews();
             } catch (err) {
                 alert(`❌ 이적 등록 실패: ${err.message}`);
+            }
+        });
+    }
+
+    // Form 3: Match Result Submit Handler
+    if (formAdminMatchResult && sbClient) {
+        formAdminMatchResult.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const league = document.getElementById('match-league').value;
+            const round = document.getElementById('match-round').value.trim();
+            const home = document.getElementById('match-home-team').value;
+            const homeScore = parseInt(document.getElementById('match-home-score').value, 10);
+            const away = document.getElementById('match-away-team').value;
+            const awayScore = parseInt(document.getElementById('match-away-score').value, 10);
+            const comment = document.getElementById('match-comment').value.trim();
+            const nickname = state.user ? (state.user.user_metadata?.nickname || state.user.user_metadata?.name || "90PLUS 기록원") : "90PLUS AI";
+
+            const matchResultPayload = {
+                title: `${home} ${homeScore} : ${awayScore} ${away}`,
+                content: `${league} ${round} 경기 결과 - 홈팀 ${home}와 원정팀 ${away}의 치열한 공방전 끝에 ${homeScore} 대 ${awayScore}로 경기가 마무리되었습니다. ${comment ? `득점 기록: ${comment}` : ''}`,
+                reporter: nickname,
+                tier: 1,
+                category: "경기결과",
+                is_match_result: true,
+                league,
+                round,
+                home,
+                away,
+                homeScore,
+                awayScore,
+                comment
+            };
+
+            const jsonString = JSON.stringify(matchResultPayload);
+
+            try {
+                const { error } = await sbClient
+                    .from('football_news')
+                    .insert({
+                        title: jsonString,
+                        reporter: nickname,
+                        tier: 1,
+                        is_here_we_go: false,
+                        category: "경기결과"
+                    });
+
+                if (error) throw error;
+
+                alert("⚽ 경기 결과가 성공적으로 발행 완료되어 즉시 경기결과 피드에 등록되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminMatchResult.reset();
+                loadNews();
+            } catch (err) {
+                alert(`❌ 경기 결과 발행 실패: ${err.message}`);
             }
         });
     }
@@ -998,12 +1113,78 @@ function renderNewsList(container) {
             : '';
 
         // Check if article matches user's favorite EPL team (Highlight with lime borders!)
-        const isFavTeamMatch = myTeam && (item.title.includes(myTeam) || item.content.includes(myTeam));
+        const isFavTeamMatch = myTeam && (
+            item.tag === myTeam ||
+            (item.is_match_result && (item.home === myTeam || item.away === myTeam)) ||
+            item.title.includes(myTeam) ||
+            item.content.includes(myTeam)
+        );
         const highlightClass = isFavTeamMatch 
             ? "border-2 border-brand bg-brand/5 shadow-lg shadow-brand/10" 
             : "border border-bordercolor";
 
-        if (item.is_here_we_go) {
+        if (item.is_match_result) {
+            const homeLogo = teamLogos[item.home];
+            const awayLogo = teamLogos[item.away];
+            const homeLogoHtml = homeLogo 
+                ? `<img src="${homeLogo}" class="w-8 h-8 object-contain bg-white/5 rounded-full p-0.5" alt="${item.home}">` 
+                : `<span class="text-xs font-black">🛡️</span>`;
+            const awayLogoHtml = awayLogo 
+                ? `<img src="${awayLogo}" class="w-8 h-8 object-contain bg-white/5 rounded-full p-0.5" alt="${item.away}">` 
+                : `<span class="text-xs font-black">🛡️</span>`;
+
+            card.className = `p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all border border-bordercolor ${isFavTeamMatch ? 'border-2 border-brand shadow-lg shadow-brand/10' : 'glow-border-match'} relative overflow-hidden`;
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <span class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 font-extrabold text-[10px]">⚽ ${item.league}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-darkgray text-[10px]">${item.round}</span>
+                        ${isFavTeamMatch ? `<span class="px-1.5 py-0.5 bg-brand text-black font-extrabold text-[8px] rounded">🌟 My Team</span>` : ''}
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between py-3 px-1">
+                    <!-- 홈 팀 -->
+                    <div class="flex flex-col items-center gap-1.5 w-24 text-center">
+                        ${homeLogoHtml}
+                        <span class="text-xs font-bold text-white truncate max-w-full">${item.home}</span>
+                    </div>
+                    
+                    <!-- 스코어 -->
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="flex items-center gap-4 text-3xl font-black text-white leading-none">
+                            <span class="${item.homeScore > item.awayScore ? 'text-brand' : 'text-white'}">${item.homeScore}</span>
+                            <span class="text-xs opacity-30">:</span>
+                            <span class="${item.awayScore > item.homeScore ? 'text-brand' : 'text-white'}">${item.awayScore}</span>
+                        </div>
+                        <span class="text-[9px] bg-darkbg/50 border border-bordercolor/80 text-mutedtext font-bold px-2 py-0.5 rounded-full mt-2">경기 종료</span>
+                    </div>
+                    
+                    <!-- 원정 팀 -->
+                    <div class="flex flex-col items-center gap-1.5 w-24 text-center">
+                        ${awayLogoHtml}
+                        <span class="text-xs font-bold text-white truncate max-w-full">${item.away}</span>
+                    </div>
+                </div>
+
+                ${item.comment ? `
+                <div class="mt-3 bg-darkbg/50 border border-bordercolor/40 rounded-xl p-3 text-[11px] text-mutedtext leading-relaxed">
+                    <div class="text-[10px] font-black text-brand mb-1 flex items-center gap-1"><span>📝</span>득점 정보 및 코멘트</div>
+                    <div>${item.comment}</div>
+                </div>
+                ` : ''}
+                
+                <div class="flex justify-between items-center pt-3.5 mt-3.5 border-t border-bordercolor">
+                    <span class="text-xs text-darkgray font-medium">기록원 ${item.reporter} ✓</span>
+                    <div class="flex items-center gap-3">
+                        ${adminDeleteBtn}
+                        <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
+                            <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else if (item.is_here_we_go) {
             const fromLogo = item.transfer_info ? teamLogos[item.transfer_info.from] : null;
             const toLogo = item.transfer_info ? teamLogos[item.transfer_info.to] : null;
             
@@ -1165,10 +1346,13 @@ function renderFollowingList(container) {
         // Tag check (from database JSON payload)
         const hasTagMatch = item.tag === myTeam;
         
+        // Match result team check
+        const isMatchTeam = item.is_match_result && (item.home === myTeam || item.away === myTeam);
+        
         // Text fallback
         const hasTextMatch = item.title.includes(myTeam) || item.content.includes(myTeam);
         
-        return hasTagMatch || hasTextMatch;
+        return hasTagMatch || isMatchTeam || hasTextMatch;
     });
 
     if (myTeamNews.length === 0) {
@@ -1187,6 +1371,14 @@ function renderFollowingList(container) {
         return;
     }
 
+    // Apply category filtering for Following feed
+    let filtered = myTeamNews;
+    if (state.activeNewsCategory === '이적소식') {
+        filtered = myTeamNews.filter(item => item.is_here_we_go || item.category === '이적소식');
+    } else if (state.activeNewsCategory === '경기결과') {
+        filtered = myTeamNews.filter(item => item.category === '경기결과');
+    }
+
     const myTeamLogo = teamLogos[myTeam];
     const headerHtml = `
         <div class="flex items-center gap-3 bg-darkbg/40 border border-bordercolor rounded-2xl p-4 mb-2">
@@ -1197,12 +1389,23 @@ function renderFollowingList(container) {
             </div>
         </div>
     `;
+
+    if (filtered.length === 0) {
+        container.innerHTML = headerHtml + `
+            <div class="text-center py-16 bg-cardbg rounded-2xl p-6 border border-bordercolor mt-4">
+                <span class="text-3xl block mb-3">📭</span>
+                <h3 class="text-white font-extrabold text-sm">${myTeam}의 ${state.activeNewsCategory} 소식이 없습니다.</h3>
+                <p class="text-mutedtext text-xs mt-1.5 leading-relaxed">다른 카테고리를 선택하거나 나중에 다시 확인해 주세요!</p>
+            </div>
+        `;
+        return;
+    }
     
     const wrapper = document.createElement('div');
     wrapper.className = "flex flex-col gap-4";
     wrapper.innerHTML = headerHtml;
 
-    myTeamNews.forEach(item => {
+    filtered.forEach(item => {
         const isBookmarked = state.bookmarkedIds.includes(item.id);
         const card = document.createElement('div');
         const highlightClass = "border-2 border-brand bg-brand/5 shadow-lg shadow-brand/10";
@@ -1427,6 +1630,41 @@ function openBottomSheet(item) {
         `;
     }
 
+    let matchSection = '';
+    if (item.is_match_result) {
+        const homeLogo = teamLogos[item.home];
+        const awayLogo = teamLogos[item.away];
+        const homeLogoHtml = homeLogo ? `<img src="${homeLogo}" class="w-12 h-12 object-contain bg-white/5 rounded-full p-1" alt="${item.home}">` : `🛡️`;
+        const awayLogoHtml = awayLogo ? `<img src="${awayLogo}" class="w-12 h-12 object-contain bg-white/5 rounded-full p-1" alt="${item.away}">` : `🛡️`;
+
+        matchSection = `
+            <div class="flex items-center justify-around bg-darkbg/70 border border-bordercolor rounded-2xl p-5 mb-6 text-sm font-bold text-white">
+                <div class="flex flex-col items-center gap-1.5 w-24 text-center">
+                    ${homeLogoHtml}
+                    <span class="text-xs text-mutedtext mt-1">홈 팀</span>
+                    <span class="truncate max-w-full text-xs font-extrabold">${item.home}</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="text-2xl font-black text-white flex items-center gap-3">
+                        <span class="${item.homeScore > item.awayScore ? 'text-brand' : 'text-white'}">${item.homeScore}</span>
+                        <span class="text-xs opacity-30">:</span>
+                        <span class="${item.awayScore > item.homeScore ? 'text-brand' : 'text-white'}">${item.awayScore}</span>
+                    </div>
+                    <span class="text-[9px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold px-2 py-0.5 rounded-full mt-2">종료</span>
+                </div>
+                <div class="flex flex-col items-center gap-1.5 w-24 text-center">
+                    ${awayLogoHtml}
+                    <span class="text-xs text-mutedtext mt-1">원정 팀</span>
+                    <span class="truncate max-w-full text-xs font-extrabold">${item.away}</span>
+                </div>
+            </div>
+            <div class="bg-darkbg/50 border border-bordercolor rounded-xl p-3.5 mb-6 flex justify-between items-center text-xs font-bold">
+                <span class="text-mutedtext">🏆 대회 및 라운드</span>
+                <span class="text-brand text-xs font-black">${item.league} — ${item.round}</span>
+            </div>
+        `;
+    }
+
     const adminDeleteBtnModal = state.adminMode
         ? `<button id="btn-delete-modal" class="px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-extrabold text-xs">기사 완전히 삭제</button>`
         : '';
@@ -1437,6 +1675,7 @@ function openBottomSheet(item) {
             <span class="text-darkgray text-xs">${getRelativeTime(item.created_at)}</span>
         </div>
         <h2 class="text-xl font-black text-white leading-snug mb-5">${item.title}</h2>
+        ${matchSection}
         ${transferSection}
         ${summarySection}
         <div class="text-sm text-gray-200 leading-relaxed mb-8 whitespace-pre-line">${item.content}</div>

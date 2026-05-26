@@ -285,6 +285,7 @@
             <div class="flex border-b border-bordercolor mb-6 text-xs font-bold">
                 <button id="admin-tab-write" class="flex-1 pb-3 border-b-2 border-brand text-brand">✍️ AI 뉴스 작성</button>
                 <button id="admin-tab-transfer" class="flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white">🚨 이적 등록</button>
+                <button id="admin-tab-match-result" class="flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white">⚽ 경기 결과 등록</button>
             </div>
 
             <!-- Form 1: AI News Writer -->
@@ -434,6 +435,95 @@
                 </div>
                 <button type="submit" class="w-full bg-[#ff9f00] text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-[#ff9f00]/20 active:scale-[0.98]">
                     🚨 HERE WE GO! 이적 등록 발행
+                </button>
+            </form>
+
+            <!-- Form 3: Match Result Registration (Initially Hidden) -->
+            <form id="form-admin-match-result" class="space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">대회 구분</label>
+                        <select id="match-league" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                            <option value="프리미어리그">프리미어리그 (PL)</option>
+                            <option value="챔피언스리그">챔피언스리그 (UCL)</option>
+                            <option value="유로파리그">유로파리그 (UEL)</option>
+                            <option value="FA컵">FA컵</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">시즌 / 라운드 / 세부일정</label>
+                        <input type="text" id="match-round" placeholder="예) 26-27시즌 1라운드" required
+                               class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3.5 bg-darkbg/40 border border-bordercolor rounded-2xl p-4">
+                    <!-- 홈 팀 -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-brand text-center">홈 팀 (Home)</label>
+                        <select id="match-home-team" class="w-full bg-cardbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors">
+                            <option value="아스날">아스날</option>
+                            <option value="맨시티">맨시티</option>
+                            <option value="맨유">맨유</option>
+                            <option value="애스턴 빌라">애스턴 빌라</option>
+                            <option value="리버풀">리버풀</option>
+                            <option value="본머스">본머스</option>
+                            <option value="선덜랜드">선덜랜드</option>
+                            <option value="브라이턴">브라이턴</option>
+                            <option value="브렌트퍼드">브렌트퍼드</option>
+                            <option value="첼시">첼시</option>
+                            <option value="풀럼">풀럼</option>
+                            <option value="뉴캐슬">뉴캐슬</option>
+                            <option value="에버턴">에버턴</option>
+                            <option value="리즈 유나이티드">리즈 유나이티드</option>
+                            <option value="크리스털 팰리스">크리스털 팰리스</option>
+                            <option value="노팅엄 포레스트">노팅엄 포레스트</option>
+                            <option value="토트넘">토트넘</option>
+                            <option value="웨스트 햄">웨스트 햄</option>
+                            <option value="번리">번리</option>
+                            <option value="울브스">울브스</option>
+                        </select>
+                        <input type="number" id="match-home-score" min="0" placeholder="0" required
+                               class="w-full text-center bg-cardbg text-white border border-bordercolor rounded-xl py-2.5 text-base font-black focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                    <!-- 원정 팀 -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-red-400 text-center">원정 팀 (Away)</label>
+                        <select id="match-away-team" class="w-full bg-cardbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors">
+                            <option value="리버풀">리버풀</option>
+                            <option value="아스날">아스날</option>
+                            <option value="맨시티">맨시티</option>
+                            <option value="맨유">맨유</option>
+                            <option value="애스턴 빌라">애스턴 빌라</option>
+                            <option value="본머스">본머스</option>
+                            <option value="선덜랜드">선덜랜드</option>
+                            <option value="브라이턴">브라이턴</option>
+                            <option value="브렌트퍼드">브렌트퍼드</option>
+                            <option value="첼시">첼시</option>
+                            <option value="풀럼">풀럼</option>
+                            <option value="뉴캐슬">뉴캐슬</option>
+                            <option value="에버턴">에버턴</option>
+                            <option value="리즈 유나이티드">리즈 유나이티드</option>
+                            <option value="크리스털 팰리스">크리스털 팰리스</option>
+                            <option value="노팅엄 포레스트">노팅엄 포레스트</option>
+                            <option value="토트넘">토트넘</option>
+                            <option value="웨스트 햄">웨스트 햄</option>
+                            <option value="번리">번리</option>
+                            <option value="울브스">울브스</option>
+                        </select>
+                        <input type="number" id="match-away-score" min="0" placeholder="0" required
+                               class="w-full text-center bg-cardbg text-white border border-bordercolor rounded-xl py-2.5 text-base font-black focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">세부 득점자 / 간단 코멘트 (옵션)</label>
+                    <textarea id="match-comment" rows="2" placeholder="예) 아스날: 사카 45' (PK) | 리버풀: 살라 72' (도움: 누녜스)"
+                              class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]">
+                    ⚽ 경기 결과 등록 발행
                 </button>
             </form>
         </div>

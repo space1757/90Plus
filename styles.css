@@ -89,6 +89,17 @@ body {
   transform: translateY(-2px);
 }
 
+.glow-border-match {
+  position: relative;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glow-border-match:hover {
+  border-color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  transform: translateY(-2px);
+}
+
 /* Soccer Tactic Pitch BG */
 .pitch-bg {
   background: linear-gradient(135deg, #0f2d1e 0%, #061b11 100%);
