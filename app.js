@@ -1,5 +1,5 @@
 // =========================================================================
-// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.2.0)
+// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.3.0)
 // =========================================================================
 
 // 1. Supabase Initialization
@@ -21,11 +21,11 @@ const state = {
 
 // 3. Official Club Logo Emblems (Wikipedia Official High-Res Vectors)
 const teamLogos = {
-    "리버풀": "https://upload.wikimedia.org/wikipedia/ko/b/b8/Liverpool_FC_logo.svg",
-    "아스날": "https://upload.wikimedia.org/wikipedia/ko/5/53/Arsenal_FC.svg",
     "맨시티": "https://upload.wikimedia.org/wikipedia/ko/e/eb/Manchester_City_FC_badge.svg",
-    "첼시": "https://upload.wikimedia.org/wikipedia/ko/c/cc/Chelsea_FC.svg",
+    "아스날": "https://upload.wikimedia.org/wikipedia/ko/5/53/Arsenal_FC.svg",
+    "리버풀": "https://upload.wikimedia.org/wikipedia/ko/b/b8/Liverpool_FC_logo.svg",
     "토트넘": "https://upload.wikimedia.org/wikipedia/ko/b/b4/Tottenham_Hotspur_FC_badge.svg",
+    "첼시": "https://upload.wikimedia.org/wikipedia/ko/c/cc/Chelsea_FC.svg",
     "맨유": "https://upload.wikimedia.org/wikipedia/ko/b/b1/Manchester_United_FC_crest.svg",
     "나폴리": "https://upload.wikimedia.org/wikipedia/commons/d/d2/SSC_Napoli_2024.svg",
     "파리 생제르맹": "https://upload.wikimedia.org/wikipedia/ko/a/a7/Paris_Saint-Germain_FC_logo.svg",
@@ -63,23 +63,23 @@ const mockNews = [
     }
 ];
 
-// EPL Real Match Results & Real Live Scores Update
+// EPL Real Match Results & Real Live Scores (Synced to real EPL high-fidelity matches)
 const mockMatches = {
     25: [
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨유", away: "리버풀", homeScore: 2, awayScore: 2, stats: { shots: 14, possession: 49 }, highlight: false },
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "첼시", away: "토트넘", homeScore: 1, awayScore: 2, stats: { shots: 11, possession: 52 }, highlight: false },
-        { league: "프리미어리그", leagueId: "EPL", status: "LIVE", time: "88'", home: "맨시티", away: "아스날", homeScore: 3, awayScore: 1, stats: { shots: 19, possession: 61 }, highlight: true },
-        { league: "라리가", leagueId: "LALIGA", status: "FT", time: "종료", home: "바르샤", away: "레알", homeScore: 1, awayScore: 3, stats: { shots: 10, possession: 55 }, highlight: false }
+        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨시티", away: "아스날", homeScore: 0, awayScore: 0, stats: { shots: 12, possession: 72 }, highlight: false },
+        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨유", away: "리버풀", homeScore: 2, awayScore: 2, stats: { shots: 15, possession: 47 }, highlight: false },
+        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "첼시", away: "토트넘", homeScore: 2, awayScore: 0, stats: { shots: 16, possession: 51 }, highlight: false },
+        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "아스날", away: "맨유", homeScore: 3, awayScore: 1, stats: { shots: 17, possession: 55 }, highlight: true }
     ]
 };
 
-// EPL Real Standings Update
+// EPL Real Standings (23/24 Final Actual Premier League Standings)
 const mockStandings = [
-    { rank: 1, team: "아스날", played: 35, win: 24, draw: 8, loss: 3, gd: 48, pts: 80 },
-    { rank: 2, team: "맨시티", played: 34, win: 24, draw: 6, loss: 4, gd: 45, pts: 78 },
-    { rank: 3, team: "리버풀", played: 35, win: 22, draw: 9, loss: 4, gd: 39, pts: 75 },
-    { rank: 4, team: "토트넘", played: 35, win: 19, draw: 6, loss: 10, gd: 18, pts: 63 },
-    { rank: 5, team: "첼시", played: 35, win: 17, draw: 9, loss: 9, gd: 15, pts: 60 }
+    { rank: 1, team: "맨시티", played: 38, win: 28, draw: 7, loss: 3, gd: 62, pts: 91 },
+    { rank: 2, team: "아스날", played: 38, win: 28, draw: 5, loss: 5, gd: 62, pts: 89 },
+    { rank: 3, team: "리버풀", played: 38, win: 24, draw: 10, loss: 4, gd: 45, pts: 82 },
+    { rank: 4, team: "토트넘", played: 38, win: 20, draw: 6, loss: 12, gd: 13, pts: 66 },
+    { rank: 5, team: "첼시", played: 38, win: 18, draw: 9, loss: 11, gd: 14, pts: 63 }
 ];
 
 // 5. Utility Functions
@@ -205,6 +205,9 @@ async function loadNews() {
     } finally {
         renderTopNav();
         renderMainContent();
+        
+        // Trigger live notifications for user's favorite team news
+        triggerFavTeamAlert();
     }
 }
 
@@ -227,6 +230,7 @@ async function initAuth() {
         ) : false;
         
         updateAuthUI();
+        triggerFavTeamAlert();
     });
 
     // Check current active session
@@ -260,15 +264,31 @@ function updateAuthUI() {
     if (!btnAuthToggle) return;
 
     if (state.user) {
-        // User logged in state (Using Tailwind standard size w-6 h-6 instead of collapsed w-5.5 h-5.5)
-        btnAuthToggle.innerHTML = `
-            <div class="relative">
-                <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-darkbg"></span>
-            </div>
-        `;
+        // User logged in state (Using Tailwind standard size w-6 h-6)
+        // Auto register and render user's favorite EPL team logo emblem as Profile Avatar!
+        const userFavTeam = state.user.user_metadata?.fav_team;
+        const favLogo = teamLogos[userFavTeam];
+        
+        let profileHtml = '';
+        if (favLogo) {
+            profileHtml = `
+                <div class="relative">
+                    <img src="${favLogo}" class="w-6 h-6 object-contain bg-white/10 rounded-full p-0.5 border border-brand shadow-md" alt="Fav Team Avatar">
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-darkbg"></span>
+                </div>
+            `;
+        } else {
+            profileHtml = `
+                <div class="relative">
+                    <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-darkbg"></span>
+                </div>
+            `;
+        }
+
+        btnAuthToggle.innerHTML = profileHtml;
         
         if (authUserInfo) authUserInfo.classList.remove('hidden');
         if (formLogin) formLogin.classList.add('hidden');
@@ -276,9 +296,19 @@ function updateAuthUI() {
         if (authTabContainer) authTabContainer.classList.add('hidden');
 
         const nickname = state.user.user_metadata?.nickname || state.user.user_metadata?.name || state.user.email.split('@')[0];
-        if (displayName) displayName.textContent = `${nickname}님`;
+        const favTeamText = userFavTeam ? ` (${userFavTeam} 팬)` : '';
+        if (displayName) displayName.textContent = `${nickname}님${favTeamText}`;
         if (displayEmail) displayEmail.textContent = state.user.email;
-        if (avatar) avatar.textContent = nickname.substring(0, 1).toUpperCase();
+        
+        if (avatar) {
+            if (favLogo) {
+                avatar.innerHTML = `<img src="${favLogo}" class="w-full h-full object-contain p-1" alt="Fav Team">`;
+                avatar.className = "w-16 h-16 bg-white/5 border border-brand rounded-full mx-auto overflow-hidden";
+            } else {
+                avatar.textContent = nickname.substring(0, 1).toUpperCase();
+                avatar.className = "w-16 h-16 bg-brand/10 border border-brand/20 rounded-full flex items-center justify-center text-brand text-2xl font-black mx-auto";
+            }
+        }
 
         if (state.adminMode) {
             if (adminBadge) adminBadge.classList.remove('hidden');
@@ -288,7 +318,7 @@ function updateAuthUI() {
             if (btnAdminPanel) btnAdminPanel.classList.add('hidden');
         }
     } else {
-        // Guest / Logged out state (Using Tailwind standard size w-6 h-6 instead of collapsed w-5.5 h-5.5)
+        // Guest / Logged out state (Using Tailwind standard size w-6 h-6)
         btnAuthToggle.innerHTML = `
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -380,6 +410,7 @@ function setupAuthEvents() {
         formSignup.addEventListener('submit', async (e) => {
             e.preventDefault();
             const nickname = document.getElementById('signup-name').value.trim();
+            const favTeam = document.getElementById('signup-fav-team').value;
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
 
@@ -388,11 +419,11 @@ function setupAuthEvents() {
                     email,
                     password,
                     options: {
-                        data: { nickname }
+                        data: { nickname, fav_team: favTeam }
                     }
                 });
                 if (error) throw error;
-                alert("✉️ 회원가입 완료! 메일인증 후 즉시 활동하실 수 있습니다.");
+                alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
                 switchAuthTab('login');
             } catch (err) {
                 alert(`❌ 회원가입 실패: ${err.message}`);
@@ -543,6 +574,25 @@ async function deleteArticle(id, event) {
         loadNews();
     } catch (err) {
         alert(`❌ 기사 삭제 실패: ${err.message}`);
+    }
+}
+
+// Live alert notification logic for favorite EPL team news
+let isAlertTriggered = false; // Prevent multiple annoying alerts
+function triggerFavTeamAlert() {
+    if (!state.user || isAlertTriggered) return;
+    const myTeam = state.user.user_metadata?.fav_team;
+    if (!myTeam) return;
+
+    const hasMyTeamNews = state.newsData.some(item => 
+        item.title.includes(myTeam) || item.content.includes(myTeam)
+    );
+
+    if (hasMyTeamNews) {
+        isAlertTriggered = true;
+        setTimeout(() => {
+            alert(`🔔 선호팀 소식 알림: 응원하시는 '${myTeam}'의 새로운 경기 및 이적 정보가 업데이트되었습니다! 피드에서 라임색 테두리로 강조된 기사를 바로 확인해보세요.`);
+        }, 1000);
     }
 }
 
@@ -830,7 +880,7 @@ function setupSearch() {
     const btnNotify = document.getElementById('btn-notify');
     const btnSettings = document.getElementById('btn-settings');
     if (btnNotify) btnNotify.addEventListener('click', () => alert("🔔 알림: 오늘 올라온 프리미어리그 이적 속보 및 경기 소식을 확인하세요!"));
-    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.2.0"));
+    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.3.0"));
 }
 
 function renderMainContent() {
@@ -864,6 +914,8 @@ function renderNewsList(container) {
         return;
     }
 
+    const myTeam = state.user?.user_metadata?.fav_team || '';
+
     filtered.forEach(item => {
         const isBookmarked = state.bookmarkedIds.includes(item.id);
         const card = document.createElement('div');
@@ -873,6 +925,12 @@ function renderNewsList(container) {
                    <span>🗑️</span> 삭제
                </button>`
             : '';
+
+        // Check if article matches user's favorite EPL team (Highlight with lime borders!)
+        const isFavTeamMatch = myTeam && (item.title.includes(myTeam) || item.content.includes(myTeam));
+        const highlightClass = isFavTeamMatch 
+            ? "border-2 border-brand bg-brand/5 shadow-lg shadow-brand/10" 
+            : "border border-bordercolor";
 
         if (item.is_here_we_go) {
             const fromLogo = item.transfer_info ? teamLogos[item.transfer_info.from] : null;
@@ -885,10 +943,13 @@ function renderNewsList(container) {
                 ? `<img src="${toLogo}" class="w-6 h-6 object-contain bg-white/5 rounded-full p-0.5" alt="${item.transfer_info.to}">` 
                 : `<span class="text-xs font-black">🛡️</span>`;
 
-            card.className = "glow-border-orange p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all relative overflow-hidden";
+            card.className = `p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all relative overflow-hidden ${isFavTeamMatch ? 'border-2 border-brand shadow-lg shadow-brand/10' : 'glow-border-orange'}`;
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
-                    <span class="px-3 py-1 bg-[#ff9f00]/10 border border-[#ff9f00]/30 rounded-full text-[#ff9f00] font-black text-[10px] pulse-live">🚨 HERE WE GO!</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-3 py-1 bg-[#ff9f00]/10 border border-[#ff9f00]/30 rounded-full text-[#ff9f00] font-black text-[10px] pulse-live">🚨 HERE WE GO!</span>
+                        ${isFavTeamMatch ? `<span class="px-2 py-0.5 bg-brand text-black font-extrabold text-[9px] rounded-full">🌟 My Team</span>` : ''}
+                    </div>
                     <span class="text-darkgray text-[11px]">${getRelativeTime(item.created_at)}</span>
                 </div>
                 <h3 class="text-2xl font-black text-white leading-tight mb-2">${item.title}</h3>
@@ -924,7 +985,7 @@ function renderNewsList(container) {
             `;
         } else {
             const isTier1 = item.tier === 1;
-            card.className = `${isTier1 ? 'glow-border' : 'border border-bordercolor'} p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all`;
+            card.className = `p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all ${isTier1 && !isFavTeamMatch ? 'glow-border' : ''} ${highlightClass}`;
             
             let summaryHtml = '';
             if (item.summary_points && item.summary_points.length > 0) {
@@ -938,7 +999,10 @@ function renderNewsList(container) {
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-2.5">
-                    <span class="text-[9px] font-bold px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-amber-500 uppercase">TIER ${item.tier}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-bold px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-amber-500 uppercase">TIER ${item.tier}</span>
+                        ${isFavTeamMatch ? `<span class="px-2 py-0.5 bg-brand text-black font-extrabold text-[9px] rounded-full">🌟 My Team</span>` : ''}
+                    </div>
                     <span class="text-darkgray text-[11px]">${getRelativeTime(item.created_at)}</span>
                 </div>
                 <h3 class="text-base font-extrabold text-white leading-snug mb-2.5">${item.title}</h3>
