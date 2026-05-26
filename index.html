@@ -59,6 +59,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                 </button>
+                <!-- Profile / Auth Button -->
+                <button id="btn-auth-toggle" class="hover:text-brand transition-colors p-1" aria-label="프로필">
+                    <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -124,6 +130,212 @@
                 </button>
             </div>
         </footer>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-md opacity-0 visibility-hidden transition-all duration-300 z-50 flex items-center justify-center p-4">
+        <div class="bg-cardbg border border-bordercolor w-full max-w-sm rounded-2xl p-6 relative shadow-2xl glass-effect">
+            <!-- Close Button -->
+            <button id="btn-close-auth" class="absolute top-4 right-4 text-darkgray hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            
+            <!-- Tab Headers -->
+            <div class="flex border-b border-bordercolor mb-6" id="auth-tab-container">
+                <button id="auth-tab-login" class="flex-1 pb-3 text-sm font-extrabold border-b-2 border-brand text-brand">로그인</button>
+                <button id="auth-tab-signup" class="flex-1 pb-3 text-sm font-extrabold border-b-2 border-transparent text-mutedtext hover:text-white">회원가입</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">이메일 주소</label>
+                    <input type="email" id="login-email" placeholder="example@email.com" required
+                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">비밀번호</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required
+                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <button type="submit" class="w-full bg-brand text-black font-extrabold py-3 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]">로그인</button>
+            </form>
+            
+            <!-- Signup Form (Hidden initially) -->
+            <form id="form-signup" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">닉네임</label>
+                    <input type="text" id="signup-name" placeholder="닉네임 입력" required
+                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">이메일 주소</label>
+                    <input type="email" id="signup-email" placeholder="example@email.com" required
+                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">비밀번호</label>
+                    <input type="password" id="signup-password" placeholder="6자리 이상" minlength="6" required
+                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <button type="submit" class="w-full bg-brand text-black font-extrabold py-3 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]">회원가입</button>
+            </form>
+
+            <!-- User Info (Hidden initially, shown when logged in) -->
+            <div id="auth-user-info" class="hidden text-center space-y-4">
+                <div class="w-16 h-16 bg-brand/10 border border-brand/20 rounded-full flex items-center justify-center text-brand text-2xl font-black mx-auto" id="user-avatar">
+                    U
+                </div>
+                <div>
+                    <h3 id="user-display-name" class="text-white font-extrabold text-lg">사용자님</h3>
+                    <p id="user-display-email" class="text-xs text-mutedtext mt-1">user@example.com</p>
+                    <span id="user-admin-badge" class="hidden mt-2 inline-block px-2.5 py-0.5 bg-brand text-black font-black text-[10px] rounded-full">ADMIN</span>
+                </div>
+                
+                <div class="pt-4 border-t border-bordercolor space-y-2">
+                    <button id="btn-admin-panel" class="hidden w-full bg-cardhover text-white border border-bordercolor hover:border-brand/50 font-bold py-2.5 rounded-xl text-xs transition-all">
+                        🛡️ 관리자 대시보드 열기
+                    </button>
+                    <button id="btn-logout" class="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-bold py-2.5 rounded-xl text-xs transition-all hover:bg-red-500/20">
+                        로그아웃
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL MODAL -->
+    <div id="admin-backdrop" class="fixed inset-0 bg-black/90 backdrop-blur-md opacity-0 visibility-hidden transition-all duration-300 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-cardbg border border-bordercolor w-full max-w-lg rounded-2xl p-6 relative shadow-2xl glass-effect my-8 max-h-[90vh] overflow-y-auto">
+            <!-- Close Button -->
+            <button id="btn-close-admin" class="absolute top-4 right-4 text-darkgray hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <h2 class="text-xl font-black text-white mb-6 flex items-center gap-2">
+                <span class="text-brand">🛡️</span> 90PLUS⁺ 관리자 콘솔
+            </h2>
+
+            <!-- Gemini API Key Section -->
+            <div class="bg-darkbg/50 border border-bordercolor rounded-xl p-4 mb-6">
+                <label class="block text-xs font-bold text-brand mb-1.5">🔑 Google Gemini API Key</label>
+                <div class="flex gap-2">
+                    <input type="password" id="gemini-api-key" placeholder="AI 본문 생성을 위해 Gemini API 키를 입력하세요..." 
+                           class="flex-1 bg-darkbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors">
+                    <button id="btn-save-key" class="bg-brand text-black text-xs font-black px-4 py-2 rounded-xl transition-all hover:shadow-md hover:shadow-brand/20">저장</button>
+                </div>
+                <p class="text-[10px] text-mutedtext mt-2">※ 입력하신 API Key는 로컬 브라우저(LocalStorage)에만 안전하게 보관되며, 서버로 전송되지 않습니다. <a href="https://aistudio.google.com/" target="_blank" class="text-brand underline">Gemini API 키 발급받기</a></p>
+            </div>
+
+            <!-- Tab Headers for Admin Functions -->
+            <div class="flex border-b border-bordercolor mb-6 text-xs font-bold">
+                <button id="admin-tab-write" class="flex-1 pb-3 border-b-2 border-brand text-brand">✍️ AI 뉴스 작성</button>
+                <button id="admin-tab-transfer" class="flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white">🚨 이적 등록</button>
+            </div>
+
+            <!-- Form 1: AI News Writer -->
+            <form id="form-admin-news" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">기사 제목</label>
+                    <input type="text" id="admin-news-title" placeholder="예) 손흥민 멀티골 작렬, 토트넘 빌라 격파" required
+                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">카테고리</label>
+                    <select id="admin-news-category" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                        <option value="최신뉴스">최신뉴스</option>
+                        <option value="이적소식">이적소식</option>
+                        <option value="경기결과">경기결과</option>
+                        <option value="전술분석">전술분석</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">기사 개요 / 대략적 사실 (AI 본문 작성 재료)</label>
+                    <textarea id="admin-news-outline" rows="4" placeholder="예) 손흥민이 아스톤 빌라와의 경기에서 후반 15분, 25분 연속골을 넣으며 2-1 승리를 이끌었다. 첫 번째 골은 쿨루셉스키의 크로스를 발리슛으로 연결했고, 두 번째 골은 개인 돌파 후 침착한 슛이었다. 이번 승리로 토트넘은 리그 4위 자리를 탈환했다." required
+                              class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
+                </div>
+                
+                <!-- AI Generated Text Preview (Initially hidden) -->
+                <div id="ai-preview-container" class="hidden space-y-3 bg-darkbg/80 border border-brand/20 rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-brand flex items-center gap-1"><span>🪄</span>AI 생성 본문 초안</span>
+                        <button type="button" id="btn-ai-regenerate" class="text-[10px] text-mutedtext hover:text-white underline">다시 생성</button>
+                    </div>
+                    <textarea id="admin-news-content" rows="6" required
+                              class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors"></textarea>
+                    
+                    <label class="block text-xs font-bold text-brand mt-2">🪄 AI 요약 포인트 (줄바꿈으로 구분)</label>
+                    <textarea id="admin-news-summary" rows="3" placeholder="한 줄씩 요약 포인트를 작성하세요..."
+                              class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" id="btn-generate-ai-text" class="flex-1 bg-teal-500 text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-teal-500/20 active:scale-[0.98]">
+                        🪄 AI 본문 초안 생성 (Gemini)
+                    </button>
+                    <button type="submit" id="btn-submit-news" class="flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 opacity-50 cursor-not-allowed" disabled>
+                        기사 발행 및 등록
+                    </button>
+                </div>
+            </form>
+
+            <!-- Form 2: Direct Transfer Registration -->
+            <form id="form-admin-transfer" class="space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">선수명</label>
+                        <input type="text" id="transfer-player" placeholder="예) 해리 케인" required
+                               class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">이적료</label>
+                        <input type="text" id="transfer-cost" placeholder="예) €100M" required
+                               class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">이전 구단 (From)</label>
+                        <input type="text" id="transfer-from" placeholder="예) 토트넘" required
+                               class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">이적 구단 (To)</label>
+                        <input type="text" id="transfer-to" placeholder="예) 바이에른 뮌헨" required
+                               class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">보도 기자</label>
+                        <input type="text" id="transfer-reporter" placeholder="예) Fabrizio Romano" required
+                               class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-mutedtext mb-1.5">기자 Tier (1~5)</label>
+                        <select id="transfer-tier" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                            <option value="1">Tier 1 (매우 높음)</option>
+                            <option value="2">Tier 2 (높음)</option>
+                            <option value="3">Tier 3 (보통)</option>
+                            <option value="4">Tier 4 (낮음)</option>
+                            <option value="5">Tier 5 (지라시)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">상세 설명</label>
+                    <textarea id="transfer-desc" rows="3" placeholder="예) 뮌헨과 개인 합의가 완료되었습니다. 메디컬 테스트가 예정되어 있으며 이적료 최종 합의를 마쳤습니다." required
+                              class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-[#ff9f00] text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-[#ff9f00]/20 active:scale-[0.98]">
+                    🚨 HERE WE GO! 이적 등록 발행
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- DETAILS DRAWER (BOTTOM SHEET) -->

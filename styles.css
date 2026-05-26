@@ -171,3 +171,25 @@ body {
 .bottom-sheet.open {
   transform: translate(-50%, 0);
 }
+
+/* Visibility Utilities */
+.visibility-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+.opacity-0 {
+  opacity: 0;
+}
+
+/* Modal overlays transition */
+#auth-backdrop, #admin-backdrop {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+#auth-backdrop.open, #admin-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
