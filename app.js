@@ -1,5 +1,5 @@
 // =========================================================================
-// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.3.0)
+// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.4.0)
 // =========================================================================
 
 // 1. Supabase Initialization
@@ -14,23 +14,23 @@ const state = {
     newsData: [],
     bookmarkedIds: JSON.parse(localStorage.getItem('90plus_bookmarks') || '[]'),
     searchQuery: '',
-    selectedDate: 25,
     user: null,         // Supabase Auth User Object
     adminMode: false    // Admin authorization toggle
 };
 
-// 3. Official Club Logo Emblems (Wikipedia Official High-Res Vectors)
+// 3. Official Club Logo Emblems (Guaranteed 100% Hotlink-Safe FotMob High-Res CDN Paths)
 const teamLogos = {
-    "맨시티": "https://upload.wikimedia.org/wikipedia/ko/e/eb/Manchester_City_FC_badge.svg",
-    "아스날": "https://upload.wikimedia.org/wikipedia/ko/5/53/Arsenal_FC.svg",
-    "리버풀": "https://upload.wikimedia.org/wikipedia/ko/b/b8/Liverpool_FC_logo.svg",
-    "토트넘": "https://upload.wikimedia.org/wikipedia/ko/b/b4/Tottenham_Hotspur_FC_badge.svg",
-    "첼시": "https://upload.wikimedia.org/wikipedia/ko/c/cc/Chelsea_FC.svg",
-    "맨유": "https://upload.wikimedia.org/wikipedia/ko/b/b1/Manchester_United_FC_crest.svg",
-    "나폴리": "https://upload.wikimedia.org/wikipedia/commons/d/d2/SSC_Napoli_2024.svg",
-    "파리 생제르맹": "https://upload.wikimedia.org/wikipedia/ko/a/a7/Paris_Saint-Germain_FC_logo.svg",
-    "바르샤": "https://upload.wikimedia.org/wikipedia/ko/4/47/FC_Barcelona_%28logo%29.svg",
-    "레알": "https://upload.wikimedia.org/wikipedia/ko/c/c7/Real_Madrid_CF_logo.svg"
+    "맨시티": "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png",
+    "아스날": "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png",
+    "맨유": "https://images.fotmob.com/image_resources/logo/teamlogo/10260.png",
+    "애스턴 빌라": "https://images.fotmob.com/image_resources/logo/teamlogo/8602.png",
+    "리버풀": "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png",
+    "토트넘": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+    "첼시": "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png",
+    "나폴리": "https://images.fotmob.com/image_resources/logo/teamlogo/9875.png",
+    "파리 생제르맹": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
+    "바르샤": "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png",
+    "레알": "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png"
 };
 
 // 4. Premium Mock Data (Offline Fallbacks)
@@ -40,7 +40,7 @@ const mockNews = [
         created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
         is_here_we_go: true,
         title: "빅토르 오시멘",
-        transfer_info: { from: "SSC 나폴리", to: "파리 생제르맹", cost: "€120M + 보너스" },
+        transfer_info: { from: "나폴리", to: "파리 생제르맹", cost: "€120M + 보너스" },
         reporter: "Fabrizio Romano",
         tier: 1,
         category: "이적소식",
@@ -63,23 +63,13 @@ const mockNews = [
     }
 ];
 
-// EPL Real Match Results & Real Live Scores (Synced to real EPL high-fidelity matches)
-const mockMatches = {
-    25: [
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨시티", away: "아스날", homeScore: 0, awayScore: 0, stats: { shots: 12, possession: 72 }, highlight: false },
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨유", away: "리버풀", homeScore: 2, awayScore: 2, stats: { shots: 15, possession: 47 }, highlight: false },
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "첼시", away: "토트넘", homeScore: 2, awayScore: 0, stats: { shots: 16, possession: 51 }, highlight: false },
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "아스날", away: "맨유", homeScore: 3, awayScore: 1, stats: { shots: 17, possession: 55 }, highlight: true }
-    ]
-};
-
-// EPL Real Standings (23/24 Final Actual Premier League Standings)
+// EPL Real Standings (EPL Actual Standings Synchronized with user screenshot)
 const mockStandings = [
-    { rank: 1, team: "맨시티", played: 38, win: 28, draw: 7, loss: 3, gd: 62, pts: 91 },
-    { rank: 2, team: "아스날", played: 38, win: 28, draw: 5, loss: 5, gd: 62, pts: 89 },
-    { rank: 3, team: "리버풀", played: 38, win: 24, draw: 10, loss: 4, gd: 45, pts: 82 },
-    { rank: 4, team: "토트넘", played: 38, win: 20, draw: 6, loss: 12, gd: 13, pts: 66 },
-    { rank: 5, team: "첼시", played: 38, win: 18, draw: 9, loss: 11, gd: 14, pts: 63 }
+    { rank: 1, team: "아스날", played: 38, win: 26, draw: 7, loss: 5, gd: 44, pts: 85 },
+    { rank: 2, team: "맨시티", played: 38, win: 23, draw: 9, loss: 6, gd: 42, pts: 78 },
+    { rank: 3, team: "맨유", played: 38, win: 20, draw: 11, loss: 7, gd: 19, pts: 71 },
+    { rank: 4, team: "애스턴 빌라", played: 38, win: 19, draw: 8, loss: 11, gd: 7, pts: 65 },
+    { rank: 5, team: "리버풀", played: 38, win: 17, draw: 9, loss: 12, gd: 10, pts: 60 }
 ];
 
 // 5. Utility Functions
@@ -782,7 +772,7 @@ function setupAdminPanelEvents() {
 
 // 9. UI Rendering & Tab Routers
 function setupTabNavigation() {
-    const tabs = { 'tab-matches': 'matches', 'tab-news': 'news', 'tab-leagues': 'leagues', 'tab-following': 'following' };
+    const tabs = { 'tab-news': 'news', 'tab-leagues': 'leagues', 'tab-following': 'following' }; // Purged tab-matches
     Object.entries(tabs).forEach(([id, tabName]) => {
         const btn = document.getElementById(id);
         if (btn) {
@@ -819,24 +809,6 @@ function renderTopNav() {
             });
             navContent.appendChild(button);
         });
-    } else if (state.currentTab === 'matches') {
-        const days = [ { d: 23, w: '월' }, { d: 24, w: '화' }, { d: 25, w: '수' }, { d: 26, w: '목' }, { d: 27, w: '금' }, { d: 28, w: '토' }, { d: 29, w: '일' } ];
-        const daysContainer = document.createElement('div');
-        daysContainer.className = "flex-1 flex justify-around items-center";
-
-        days.forEach(day => {
-            const dayBtn = document.createElement('button');
-            const isSelected = state.selectedDate === day.d;
-            dayBtn.className = `flex flex-col items-center py-1 px-2.5 rounded-lg transition-all ${isSelected ? 'bg-brand text-black font-extrabold shadow-md' : 'text-mutedtext hover:text-white'}`;
-            dayBtn.innerHTML = `<span class="text-[9px] font-medium leading-none mb-1 opacity-70">${day.w}</span><span class="text-sm font-bold leading-none">${day.d}</span>`;
-            dayBtn.addEventListener('click', () => {
-                state.selectedDate = day.d;
-                renderTopNav();
-                renderMainContent();
-            });
-            daysContainer.appendChild(dayBtn);
-        });
-        navContent.appendChild(daysContainer);
     } else if (state.currentTab === 'leagues') {
         const button = document.createElement('button');
         button.className = 'px-4 py-1.5 rounded-full text-xs font-bold border border-brand text-brand bg-brand/10';
@@ -879,8 +851,8 @@ function setupSearch() {
 
     const btnNotify = document.getElementById('btn-notify');
     const btnSettings = document.getElementById('btn-settings');
-    if (btnNotify) btnNotify.addEventListener('click', () => alert("🔔 알림: 오늘 올라온 프리미어리그 이적 속보 및 경기 소식을 확인하세요!"));
-    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.3.0"));
+    if (btnNotify) btnNotify.addEventListener('click', () => alert("🔔 알림: 오늘 올라온 프리미어리그 이적 속보 소식을 확인하세요!"));
+    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.4.0"));
 }
 
 function renderMainContent() {
@@ -890,7 +862,6 @@ function renderMainContent() {
     
     if (state.currentTab === 'news') renderNewsList(feed);
     else if (state.currentTab === 'following') renderFollowingList(feed);
-    else if (state.currentTab === 'matches') renderMatchesList(feed);
     else if (state.currentTab === 'leagues') renderLeaguesList(feed);
 }
 
@@ -1085,73 +1056,6 @@ function renderFollowingList(container) {
         });
 
         container.appendChild(card);
-    });
-}
-
-function renderMatchesList(container) {
-    const list = mockMatches[state.selectedDate] || [];
-    if (list.length === 0) {
-        container.innerHTML = `<div class="text-center py-20 text-mutedtext"><p class="text-sm">선택하신 날짜에 경기 일정이 없습니다.</p></div>`;
-        return;
-    }
-
-    const groupEl = document.createElement('div');
-    groupEl.className = "mb-4";
-    groupEl.innerHTML = `
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 bg-darkgray rounded-full"></span>
-                <h4 class="text-sm font-extrabold text-white">매치 라이브 센터</h4>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 gap-3.5" id="match-cards-container"></div>
-    `;
-    container.appendChild(groupEl);
-
-    const cardContainer = document.getElementById('match-cards-container');
-    list.forEach(match => {
-        const card = document.createElement('div');
-        card.className = `${match.highlight ? 'glow-border' : 'border border-bordercolor/80'} p-4.5 rounded-2xl bg-cardbg`;
-        
-        let statHtml = '';
-        if (match.stats) {
-            statHtml = `<div class="mt-4 pt-3.5 border-t border-bordercolor/50 flex justify-between text-[10px] text-mutedtext font-bold"><span>슈팅 ${match.stats.shots}</span><span>점유율 ${match.stats.possession}%</span><span class="text-brand">라이브 매치</span></div>`;
-        }
-
-        const homeLogo = teamLogos[match.home];
-        const awayLogo = teamLogos[match.away];
-        
-        const homeLogoHtml = homeLogo 
-            ? `<div class="w-9 h-9 rounded-full bg-white/5 p-1 flex items-center justify-center border border-bordercolor"><img src="${homeLogo}" alt="${match.home}" class="w-full h-full object-contain"></div>`
-            : `<div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs">${match.home.substring(0,1)}</div>`;
-            
-        const awayLogoHtml = awayLogo 
-            ? `<div class="w-9 h-9 rounded-full bg-white/5 p-1 flex items-center justify-center border border-bordercolor"><img src="${awayLogo}" alt="${match.away}" class="w-full h-full object-contain"></div>`
-            : `<div class="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-xs">${match.away.substring(0,1)}</div>`;
-
-        card.innerHTML = `
-            <div class="flex justify-between items-center mb-3">
-                <span class="${match.status === 'LIVE' ? 'bg-brand text-black pulse-live' : 'bg-gray-800 text-mutedtext'} text-[9px] font-black px-2 py-0.5 rounded">${match.time}</span>
-                <span class="text-[9px] text-darkgray font-bold">${match.league}</span>
-            </div>
-            <div class="flex items-center justify-between px-2">
-                <div class="flex flex-col items-center gap-1.5 w-16">
-                    ${homeLogoHtml}
-                    <span class="text-xs font-bold text-white truncate max-w-full">${match.home}</span>
-                </div>
-                <div class="flex items-center gap-4 text-2xl font-black text-white">
-                    <span>${match.homeScore}</span>
-                    <span class="text-xs opacity-40">:</span>
-                    <span>${match.awayScore}</span>
-                </div>
-                <div class="flex flex-col items-center gap-1.5 w-16">
-                    ${awayLogoHtml}
-                    <span class="text-xs font-bold text-white truncate max-w-full">${match.away}</span>
-                </div>
-            </div>
-            ${statHtml}
-        `;
-        cardContainer.appendChild(card);
     });
 }
 
