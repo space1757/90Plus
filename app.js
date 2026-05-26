@@ -1,5 +1,5 @@
 // =========================================================================
-// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.1.0)
+// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.2.0)
 // =========================================================================
 
 // 1. Supabase Initialization
@@ -33,7 +33,7 @@ const teamLogos = {
     "레알": "https://upload.wikimedia.org/wikipedia/ko/c/c7/Real_Madrid_CF_logo.svg"
 };
 
-// 4. Premium Mock Data (Purged tactic analysis cards, left only definitive soccer news)
+// 4. Premium Mock Data (Offline Fallbacks)
 const mockNews = [
     {
         id: 'mock-1',
@@ -516,6 +516,35 @@ async function generateAiArticle(apiKey, title, outline) {
     }
 }
 
+async function deleteArticle(id, event) {
+    if (event) event.stopPropagation();
+    
+    if (!confirm("🗑️ 이 축구 기사(또는 이적 소식)를 정말로 삭제하시겠습니까?")) return;
+
+    try {
+        if (id.startsWith('mock-')) {
+            // Local Mock News deletion
+            const idx = mockNews.findIndex(n => n.id === id);
+            if (idx !== -1) mockNews.splice(idx, 1);
+            alert("🗑️ 모크 기사가 로컬 메모리에서 임시 삭제되었습니다.");
+        } else if (sbClient) {
+            // Live Supabase DB News deletion
+            const { error } = await sbClient
+                .from('football_news')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            alert("🗑️ 기사가 데이터베이스에서 완전히 삭제되었습니다!");
+        }
+        
+        // Reload feeds
+        loadNews();
+    } catch (err) {
+        alert(`❌ 기사 삭제 실패: ${err.message}`);
+    }
+}
+
 function setupAdminPanelEvents() {
     const btnSaveKey = document.getElementById('btn-save-key');
     const keyInput = document.getElementById('gemini-api-key');
@@ -800,7 +829,7 @@ function setupSearch() {
     const btnNotify = document.getElementById('btn-notify');
     const btnSettings = document.getElementById('btn-settings');
     if (btnNotify) btnNotify.addEventListener('click', () => alert("🔔 알림: 오늘 올라온 프리미어리그 이적 속보 및 경기 소식을 확인하세요!"));
-    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.1.0"));
+    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.2.0"));
 }
 
 function renderMainContent() {
@@ -838,6 +867,12 @@ function renderNewsList(container) {
         const isBookmarked = state.bookmarkedIds.includes(item.id);
         const card = document.createElement('div');
         
+        const adminDeleteBtn = state.adminMode 
+            ? `<button class="delete-btn text-red-500 hover:text-red-400 font-bold text-xs flex items-center gap-1 p-1 rounded transition-colors" data-id="${item.id}">
+                   <span>🗑️</span> 삭제
+               </button>`
+            : '';
+
         if (item.is_here_we_go) {
             const fromLogo = item.transfer_info ? teamLogos[item.transfer_info.from] : null;
             const toLogo = item.transfer_info ? teamLogos[item.transfer_info.to] : null;
@@ -878,9 +913,12 @@ function renderNewsList(container) {
                 <p class="text-sm text-mutedtext leading-relaxed line-clamp-3 mb-4">${item.content}</p>
                 <div class="flex justify-between items-center pt-3.5 border-t border-bordercolor">
                     <span class="text-xs text-white font-bold">FR ${item.reporter} ✓</span>
-                    <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
-                        <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        ${adminDeleteBtn}
+                        <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
+                            <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    </div>
                 </div>
             `;
         } else {
@@ -907,9 +945,12 @@ function renderNewsList(container) {
                 ${summaryHtml}
                 <div class="flex justify-between items-center pt-3.5 mt-3.5 border-t border-bordercolor">
                     <span class="text-xs text-darkgray font-medium">${item.reporter}</span>
-                    <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
-                        <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        ${adminDeleteBtn}
+                        <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
+                            <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    </div>
                 </div>
             `;
         }
@@ -921,8 +962,15 @@ function renderNewsList(container) {
             });
         }
 
+        const deleteBtnEl = card.querySelector('.delete-btn');
+        if (deleteBtnEl) {
+            deleteBtnEl.addEventListener('click', (e) => {
+                deleteArticle(item.id, e);
+            });
+        }
+
         card.addEventListener('click', (e) => {
-            if (e.target.closest('.bookmark-btn')) return;
+            if (e.target.closest('.bookmark-btn') || e.target.closest('.delete-btn')) return;
             openBottomSheet(item);
         });
         
@@ -1145,6 +1193,10 @@ function openBottomSheet(item) {
         `;
     }
 
+    const adminDeleteBtnModal = state.adminMode
+        ? `<button id="btn-delete-modal" class="px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-extrabold text-xs">기사 완전히 삭제</button>`
+        : '';
+
     container.innerHTML = `
         <div class="flex justify-between items-start mb-2">
             <span class="text-[9px] font-black px-2.5 py-1 bg-brand/10 border border-brand/35 rounded text-brand uppercase">${item.category}</span>
@@ -1160,6 +1212,7 @@ function openBottomSheet(item) {
                 <span class="text-[9px] text-darkgray">기자 신뢰도: TIER ${item.tier}</span>
             </div>
             <div class="flex gap-2">
+                ${adminDeleteBtnModal}
                 <button id="btn-share-modal" class="p-2.5 rounded-xl bg-cardbg border border-bordercolor text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M8.684 10.742l4.636-2.318M8.684 13.258l4.636 2.318m6-6.676a3 3 0 11-6 0 3 3 0 016 0zm-6 6.676a3 3 0 11-6 0 3 3 0 016 0zm6 6.676a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -1182,6 +1235,14 @@ function openBottomSheet(item) {
         navigator.clipboard.writeText(`[90PLUS⁺] ${item.title}\n\n${item.content}`);
         alert("📋 기사 공유용 텍스트가 클립보드에 복사되었습니다!");
     };
+
+    if (document.getElementById('btn-delete-modal')) {
+        document.getElementById('btn-delete-modal').onclick = (e) => {
+            deleteArticle(item.id, e);
+            sheet.classList.remove('open');
+            backdrop.classList.remove('open');
+        };
+    }
 
     sheet.classList.add('open');
     backdrop.classList.add('open');
