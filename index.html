@@ -167,12 +167,26 @@
                     <label class="block text-xs font-bold text-mutedtext mb-1.5">선호 축구팀 (프리미어리그)</label>
                     <select id="signup-fav-team" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
                         <option value="">선택 안함</option>
-                        <option value="맨시티">맨체스터 시티</option>
                         <option value="아스날">아스날</option>
+                        <option value="맨시티">맨시티</option>
+                        <option value="맨유">맨유</option>
+                        <option value="애스턴 빌라">애스턴 빌라</option>
                         <option value="리버풀">리버풀</option>
-                        <option value="토트넘">토트넘 홋스퍼</option>
+                        <option value="본머스">본머스</option>
+                        <option value="선덜랜드">선덜랜드</option>
+                        <option value="브라이턴">브라이턴</option>
+                        <option value="브렌트퍼드">브렌트퍼드</option>
                         <option value="첼시">첼시</option>
-                        <option value="맨유">맨체스터 유나이티드</option>
+                        <option value="풀럼">풀럼</option>
+                        <option value="뉴캐슬">뉴캐슬</option>
+                        <option value="에버턴">에버턴</option>
+                        <option value="리즈 유나이티드">리즈 유나이티드</option>
+                        <option value="크리스털 팰리스">크리스털 팰리스</option>
+                        <option value="노팅엄 포레스트">노팅엄 포레스트</option>
+                        <option value="토트넘">토트넘</option>
+                        <option value="웨스트 햄">웨스트 햄</option>
+                        <option value="번리">번리</option>
+                        <option value="울브스">울브스</option>
                     </select>
                 </div>
                 <div>
@@ -197,6 +211,37 @@
                     <h3 id="user-display-name" class="text-white font-extrabold text-lg">사용자님</h3>
                     <p id="user-display-email" class="text-xs text-mutedtext mt-1">user@example.com</p>
                     <span id="user-admin-badge" class="hidden mt-2 inline-block px-2.5 py-0.5 bg-brand text-black font-black text-[10px] rounded-full">ADMIN</span>
+                </div>
+
+                <!-- 선호팀 변경 섹션 -->
+                <div class="text-left bg-darkbg/50 border border-bordercolor rounded-xl p-3 space-y-2 mx-1">
+                    <label class="block text-[11px] font-bold text-brand">My 선호 축구팀 설정/변경</label>
+                    <div class="flex gap-2">
+                        <select id="user-profile-fav-team" class="flex-1 bg-cardbg text-white border border-bordercolor rounded-lg py-1.5 px-2 text-xs focus:outline-none focus:border-brand transition-colors">
+                            <option value="">선택 안함</option>
+                            <option value="아스날">아스날</option>
+                            <option value="맨시티">맨시티</option>
+                            <option value="맨유">맨유</option>
+                            <option value="애스턴 빌라">애스턴 빌라</option>
+                            <option value="리버풀">리버풀</option>
+                            <option value="본머스">본머스</option>
+                            <option value="선덜랜드">선덜랜드</option>
+                            <option value="브라이턴">브라이턴</option>
+                            <option value="브렌트퍼드">브렌트퍼드</option>
+                            <option value="첼시">첼시</option>
+                            <option value="풀럼">풀럼</option>
+                            <option value="뉴캐슬">뉴캐슬</option>
+                            <option value="에버턴">에버턴</option>
+                            <option value="리즈 유나이티드">리즈 유나이티드</option>
+                            <option value="크리스털 팰리스">크리스털 팰리스</option>
+                            <option value="노팅엄 포레스트">노팅엄 포레스트</option>
+                            <option value="토트넘">토트넘</option>
+                            <option value="웨스트 햄">웨스트 햄</option>
+                            <option value="번리">번리</option>
+                            <option value="울브스">울브스</option>
+                        </select>
+                        <button id="btn-update-fav-team" type="button" class="bg-brand text-black text-xs font-black px-3 py-1.5 rounded-lg transition-all hover:bg-brand/80 active:scale-95">변경</button>
+                    </div>
                 </div>
                 
                 <div class="pt-4 border-t border-bordercolor space-y-2">
@@ -255,6 +300,32 @@
                         <option value="최신뉴스">최신뉴스</option>
                         <option value="이적소식">이적소식</option>
                         <option value="경기결과">경기결과</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">관련 팀 태그 (선호팀 피드 연동)</label>
+                    <select id="admin-news-tag" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
+                        <option value="">선택 안함</option>
+                        <option value="아스날">아스날</option>
+                        <option value="맨시티">맨시티</option>
+                        <option value="맨유">맨유</option>
+                        <option value="애스턴 빌라">애스턴 빌라</option>
+                        <option value="리버풀">리버풀</option>
+                        <option value="본머스">본머스</option>
+                        <option value="선덜랜드">선덜랜드</option>
+                        <option value="브라이턴">브라이턴</option>
+                        <option value="브렌트퍼드">브렌트퍼드</option>
+                        <option value="첼시">첼시</option>
+                        <option value="풀럼">풀럼</option>
+                        <option value="뉴캐슬">뉴캐슬</option>
+                        <option value="에버턴">에버턴</option>
+                        <option value="리즈 유나이티드">리즈 유나이티드</option>
+                        <option value="크리스털 팰리스">크리스털 팰리스</option>
+                        <option value="노팅엄 포레스트">노팅엄 포레스트</option>
+                        <option value="토트넘">토트넘</option>
+                        <option value="웨스트 햄">웨스트 햄</option>
+                        <option value="번리">번리</option>
+                        <option value="울브스">울브스</option>
                     </select>
                 </div>
                 <div>
@@ -329,6 +400,32 @@
                             <option value="5">Tier 5 (지라시)</option>
                         </select>
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">관련 팀 태그 (선호팀 피드 연동)</label>
+                    <select id="transfer-tag" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
+                        <option value="">선택 안함</option>
+                        <option value="아스날">아스날</option>
+                        <option value="맨시티">맨시티</option>
+                        <option value="맨유">맨유</option>
+                        <option value="애스턴 빌라">애스턴 빌라</option>
+                        <option value="리버풀">리버풀</option>
+                        <option value="본머스">본머스</option>
+                        <option value="선덜랜드">선덜랜드</option>
+                        <option value="브라이턴">브라이턴</option>
+                        <option value="브렌트퍼드">브렌트퍼드</option>
+                        <option value="첼시">첼시</option>
+                        <option value="풀럼">풀럼</option>
+                        <option value="뉴캐슬">뉴캐슬</option>
+                        <option value="에버턴">에버턴</option>
+                        <option value="리즈 유나이티드">리즈 유나이티드</option>
+                        <option value="크리스털 팰리스">크리스털 팰리스</option>
+                        <option value="노팅엄 포레스트">노팅엄 포레스트</option>
+                        <option value="토트넘">토트넘</option>
+                        <option value="웨스트 햄">웨스트 햄</option>
+                        <option value="번리">번리</option>
+                        <option value="울브스">울브스</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-mutedtext mb-1.5">상세 설명</label>

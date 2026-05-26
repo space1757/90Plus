@@ -13,6 +13,7 @@ const state = {
     activeNewsCategory: '최신뉴스',
     newsData: [],
     bookmarkedIds: JSON.parse(localStorage.getItem('90plus_bookmarks') || '[]'),
+    deletedIds: JSON.parse(localStorage.getItem('90plus_deleted') || '[]'),
     searchQuery: '',
     user: null,         // Supabase Auth User Object
     adminMode: false    // Admin authorization toggle
@@ -20,13 +21,26 @@ const state = {
 
 // 3. Official Club Logo Emblems (Guaranteed 100% Hotlink-Safe FotMob High-Res CDN Paths)
 const teamLogos = {
-    "맨시티": "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png",
     "아스날": "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png",
+    "맨시티": "https://images.fotmob.com/image_resources/logo/teamlogo/8456.png",
     "맨유": "https://images.fotmob.com/image_resources/logo/teamlogo/10260.png",
-    "애스턴 빌라": "https://images.fotmob.com/image_resources/logo/teamlogo/8602.png",
+    "애스턴 빌라": "https://images.fotmob.com/image_resources/logo/teamlogo/10252.png",
     "리버풀": "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png",
-    "토트넘": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+    "본머스": "https://images.fotmob.com/image_resources/logo/teamlogo/8678.png",
+    "선덜랜드": "https://images.fotmob.com/image_resources/logo/teamlogo/8472.png",
+    "브라이턴": "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png",
+    "브렌트퍼드": "https://images.fotmob.com/image_resources/logo/teamlogo/9937.png",
     "첼시": "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png",
+    "풀럼": "https://images.fotmob.com/image_resources/logo/teamlogo/9879.png",
+    "뉴캐슬": "https://images.fotmob.com/image_resources/logo/teamlogo/10261.png",
+    "에버턴": "https://images.fotmob.com/image_resources/logo/teamlogo/8668.png",
+    "리즈 유나이티드": "https://images.fotmob.com/image_resources/logo/teamlogo/8463.png",
+    "크리스털 팰리스": "https://images.fotmob.com/image_resources/logo/teamlogo/9826.png",
+    "노팅엄 포레스트": "https://images.fotmob.com/image_resources/logo/teamlogo/10203.png",
+    "토트넘": "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png",
+    "웨스트 햄": "https://images.fotmob.com/image_resources/logo/teamlogo/8654.png",
+    "번리": "https://images.fotmob.com/image_resources/logo/teamlogo/8191.png",
+    "울브스": "https://images.fotmob.com/image_resources/logo/teamlogo/8602.png",
     "나폴리": "https://images.fotmob.com/image_resources/logo/teamlogo/9875.png",
     "파리 생제르맹": "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png",
     "바르샤": "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png",
@@ -69,7 +83,22 @@ const mockStandings = [
     { rank: 2, team: "맨시티", played: 38, win: 23, draw: 9, loss: 6, gd: 42, pts: 78 },
     { rank: 3, team: "맨유", played: 38, win: 20, draw: 11, loss: 7, gd: 19, pts: 71 },
     { rank: 4, team: "애스턴 빌라", played: 38, win: 19, draw: 8, loss: 11, gd: 7, pts: 65 },
-    { rank: 5, team: "리버풀", played: 38, win: 17, draw: 9, loss: 12, gd: 10, pts: 60 }
+    { rank: 5, team: "리버풀", played: 38, win: 17, draw: 9, loss: 12, gd: 10, pts: 60 },
+    { rank: 6, team: "본머스", played: 38, win: 13, draw: 18, loss: 7, gd: 4, pts: 57 },
+    { rank: 7, team: "선덜랜드", played: 38, win: 14, draw: 12, loss: 12, gd: -6, pts: 54 },
+    { rank: 8, team: "브라이턴", played: 38, win: 14, draw: 11, loss: 13, gd: 6, pts: 53 },
+    { rank: 9, team: "브렌트퍼드", played: 38, win: 14, draw: 11, loss: 13, gd: 3, pts: 53 },
+    { rank: 10, team: "첼시", played: 38, win: 14, draw: 10, loss: 14, gd: 6, pts: 52 },
+    { rank: 11, team: "풀럼", played: 38, win: 15, draw: 7, loss: 16, gd: -4, pts: 52 },
+    { rank: 12, team: "뉴캐슬", played: 38, win: 14, draw: 7, loss: 17, gd: -2, pts: 49 },
+    { rank: 13, team: "에버턴", played: 38, win: 13, draw: 10, loss: 15, gd: -3, pts: 49 },
+    { rank: 14, team: "리즈 유나이티드", played: 38, win: 11, draw: 14, loss: 13, gd: -7, pts: 47 },
+    { rank: 15, team: "크리스털 팰리스", played: 38, win: 11, draw: 12, loss: 15, gd: -10, pts: 45 },
+    { rank: 16, team: "노팅엄 포레스트", played: 38, win: 11, draw: 11, loss: 16, gd: -3, pts: 44 },
+    { rank: 17, team: "토트넘", played: 38, win: 10, draw: 11, loss: 17, gd: -9, pts: 41 },
+    { rank: 18, team: "웨스트 햄", played: 38, win: 10, draw: 9, loss: 19, gd: -19, pts: 39 },
+    { rank: 19, team: "번리", played: 38, win: 4, draw: 10, loss: 24, gd: -37, pts: 22 },
+    { rank: 20, team: "울브스", played: 38, win: 3, draw: 11, loss: 24, gd: -41, pts: 20 }
 ];
 
 // 5. Utility Functions
@@ -154,6 +183,7 @@ async function loadNews() {
             let category = parsedJson?.category || item.category || "최신뉴스";
             let summaryPoints = parsedJson?.summary || [];
             let transferInfo = parsedJson?.transfer_info || item.transfer_info || null;
+            let tag = parsedJson?.tag || item.tag || null;
 
             // 3. Fallback dummy text matching for older databases
             if (!parsedJson) {
@@ -174,7 +204,8 @@ async function loadNews() {
                 is_here_we_go: isHereWeGo,
                 category,
                 summary_points: summaryPoints,
-                transfer_info: transferInfo
+                transfer_info: transferInfo,
+                tag: tag
             };
         });
 
@@ -187,6 +218,8 @@ async function loadNews() {
         });
 
         state.newsData = Array.from(uniqueMap.values());
+        // Filter out persistent deleted articles
+        state.newsData = state.newsData.filter(item => !state.deletedIds.includes(String(item.id)));
         state.newsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     } catch (err) {
@@ -289,6 +322,12 @@ function updateAuthUI() {
         const favTeamText = userFavTeam ? ` (${userFavTeam} 팬)` : '';
         if (displayName) displayName.textContent = `${nickname}님${favTeamText}`;
         if (displayEmail) displayEmail.textContent = state.user.email;
+
+        // Auto-select current favorite team in profile panel dropdown
+        const profileFavTeamSelect = document.getElementById('user-profile-fav-team');
+        if (profileFavTeamSelect) {
+            profileFavTeamSelect.value = userFavTeam || '';
+        }
         
         if (avatar) {
             if (favLogo) {
@@ -434,6 +473,50 @@ function setupAuthEvents() {
         });
     }
 
+    // User profile favorite team update handler
+    const btnUpdateFavTeam = document.getElementById('btn-update-fav-team');
+    if (btnUpdateFavTeam) {
+        btnUpdateFavTeam.addEventListener('click', async () => {
+            const selectEl = document.getElementById('user-profile-fav-team');
+            if (!selectEl) return;
+            const newFavTeam = selectEl.value;
+
+            if (state.user) {
+                btnUpdateFavTeam.disabled = true;
+                btnUpdateFavTeam.textContent = "저장 중...";
+                try {
+                    if (sbClient) {
+                        const { error } = await sbClient.auth.updateUser({
+                            data: { fav_team: newFavTeam }
+                        });
+                        if (error) throw error;
+                    }
+                    alert("🌟 선호팀이 성공적으로 변경되었습니다!");
+                    
+                    state.user.user_metadata = {
+                        ...state.user.user_metadata,
+                        fav_team: newFavTeam
+                    };
+                    
+                    // Offline fallback sync
+                    if (!sbClient) {
+                        localStorage.setItem('90plus_offline_user', JSON.stringify(state.user));
+                    }
+                    
+                    updateAuthUI();
+                    renderMainContent();
+                } catch (err) {
+                    alert(`❌ 선호팀 변경 실패: ${err.message}`);
+                } finally {
+                    btnUpdateFavTeam.disabled = false;
+                    btnUpdateFavTeam.textContent = "변경";
+                }
+            } else {
+                alert("🔒 선호팀 변경을 하려면 먼저 로그인해 주세요.");
+            }
+        });
+    }
+
     // Connect Profile Admin Button
     if (btnAdminPanel && adminBackdrop) {
         btnAdminPanel.addEventListener('click', () => {
@@ -544,11 +627,18 @@ async function deleteArticle(id, event) {
 
     try {
         const stringId = String(id);
+        
+        // Record deleted ID in local storage to prevent reappearing on reload
+        if (!state.deletedIds.includes(stringId)) {
+            state.deletedIds.push(stringId);
+            localStorage.setItem('90plus_deleted', JSON.stringify(state.deletedIds));
+        }
+
         if (stringId.startsWith('mock-')) {
             // Local Mock News deletion
             const idx = mockNews.findIndex(n => n.id === id);
             if (idx !== -1) mockNews.splice(idx, 1);
-            alert("🗑️ 모크 기사가 로컬 메모리에서 임시 삭제되었습니다.");
+            alert("🗑️ 기사가 완전히 삭제되어 다시는 표시되지 않습니다.");
         } else if (sbClient) {
             // Live Supabase DB News deletion
             const { error } = await sbClient
@@ -674,6 +764,8 @@ function setupAdminPanelEvents() {
             const summary = summaryRaw ? summaryRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
             const nickname = state.user ? (state.user.user_metadata?.nickname || state.user.user_metadata?.name || "90PLUS 기자") : "90PLUS AI";
 
+            const tag = document.getElementById('admin-news-tag').value;
+
             const richPayload = {
                 title: title,
                 content: content,
@@ -681,7 +773,8 @@ function setupAdminPanelEvents() {
                 tier: 1,
                 category: category,
                 is_here_we_go: false,
-                summary: summary
+                summary: summary,
+                tag: tag
             };
 
             const jsonString = JSON.stringify(richPayload);
@@ -703,6 +796,8 @@ function setupAdminPanelEvents() {
                 document.getElementById('admin-backdrop').classList.remove('open');
                 
                 formAdminNews.reset();
+                const newsTagSelect = document.getElementById('admin-news-tag');
+                if (newsTagSelect) newsTagSelect.value = '';
                 const previewContainer = document.getElementById('ai-preview-container');
                 if (previewContainer) previewContainer.classList.add('hidden');
                 
@@ -730,6 +825,8 @@ function setupAdminPanelEvents() {
             const tier = parseInt(document.getElementById('transfer-tier').value, 10);
             const desc = document.getElementById('transfer-desc').value.trim();
 
+            const tag = document.getElementById('transfer-tag').value;
+
             const transferPayload = {
                 title: player,
                 content: desc,
@@ -741,7 +838,8 @@ function setupAdminPanelEvents() {
                     from: fromTeam,
                     to: toTeam,
                     cost: cost
-                }
+                },
+                tag: tag
             };
 
             const jsonString = JSON.stringify(transferPayload);
@@ -762,6 +860,8 @@ function setupAdminPanelEvents() {
                 alert("🚨 HERE WE GO! 선수 이적 정보 카드가 즉시 등록 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminTransfer.reset();
+                const transTagSelect = document.getElementById('transfer-tag');
+                if (transTagSelect) transTagSelect.value = '';
                 loadNews();
             } catch (err) {
                 alert(`❌ 이적 등록 실패: ${err.message}`);
@@ -1015,33 +1115,189 @@ function renderNewsList(container) {
 }
 
 function renderFollowingList(container) {
-    const bookmarkedNews = state.newsData.filter(item => state.bookmarkedIds.includes(item.id));
-    if (bookmarkedNews.length === 0) {
+    if (!state.user) {
         container.innerHTML = `
-            <div class="text-center py-20 bg-cardbg rounded-2xl p-6 border border-bordercolor">
-                <h3 class="text-white font-bold text-base">팔로잉된 소식이 없습니다</h3>
-                <p class="text-mutedtext text-xs mt-1.5">뉴스의 하트(북마크) 버튼을 클릭하시면 실시간 즐겨찾기에 등록됩니다.</p>
+            <div class="text-center py-16 bg-cardbg rounded-2xl p-6 border border-bordercolor shadow-xl">
+                <span class="text-4xl block mb-4">🌟</span>
+                <h3 class="text-white font-extrabold text-base">로그인 후 선호팀 소식을 모아보세요!</h3>
+                <p class="text-mutedtext text-xs mt-2 leading-relaxed">회원가입/로그인 후 선호하시는 프리미어리그 팀을 설정하시면,<br>이곳에서 해당 구단의 기사 및 이적 소식만 모아서 편하게 구독할 수 있습니다.</p>
+                <button id="btn-login-following-cta" class="mt-6 bg-brand text-black font-extrabold py-2.5 px-6 rounded-xl text-xs transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]">
+                    로그인 및 선호팀 설정하기
+                </button>
+            </div>
+        `;
+        const btnCta = document.getElementById('btn-login-following-cta');
+        if (btnCta) {
+            btnCta.addEventListener('click', () => {
+                const backdrop = document.getElementById('auth-backdrop');
+                if (backdrop) backdrop.classList.add('open');
+            });
+        }
+        return;
+    }
+
+    const myTeam = state.user.user_metadata?.fav_team || '';
+    if (!myTeam) {
+        container.innerHTML = `
+            <div class="text-center py-16 bg-cardbg rounded-2xl p-6 border border-bordercolor shadow-xl">
+                <div class="w-12 h-12 rounded-full bg-brand/10 border border-brand/20 text-brand flex items-center justify-center mx-auto mb-4">
+                    <span class="text-xl font-bold">⚽</span>
+                </div>
+                <h3 class="text-white font-extrabold text-base">선호하는 구단을 등록해 주세요</h3>
+                <p class="text-mutedtext text-xs mt-2 leading-relaxed">아직 선호팀을 등록하지 않으셨습니다.<br>우측 상단의 프로필 버튼을 누르고 선호하는 프리미어리그 팀을 등록해 보세요!</p>
+                <button id="btn-profile-following-cta" class="mt-6 bg-brand text-black font-extrabold py-2.5 px-6 rounded-xl text-xs transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]">
+                    구단 등록 창 열기
+                </button>
+            </div>
+        `;
+        const btnCta = document.getElementById('btn-profile-following-cta');
+        if (btnCta) {
+            btnCta.addEventListener('click', () => {
+                const backdrop = document.getElementById('auth-backdrop');
+                if (backdrop) backdrop.classList.add('open');
+            });
+        }
+        return;
+    }
+
+    // Filter news tagged with myTeam or containing myTeam in title/content
+    const myTeamNews = state.newsData.filter(item => {
+        // Tag check (from database JSON payload)
+        const hasTagMatch = item.tag === myTeam;
+        
+        // Text fallback
+        const hasTextMatch = item.title.includes(myTeam) || item.content.includes(myTeam);
+        
+        return hasTagMatch || hasTextMatch;
+    });
+
+    if (myTeamNews.length === 0) {
+        const logoUrl = teamLogos[myTeam];
+        const logoHtml = logoUrl 
+            ? `<img src="${logoUrl}" class="w-12 h-12 object-contain mx-auto mb-4" alt="${myTeam}">`
+            : `<span class="text-4xl block mb-4">🛡️</span>`;
+
+        container.innerHTML = `
+            <div class="text-center py-16 bg-cardbg rounded-2xl p-6 border border-bordercolor">
+                ${logoHtml}
+                <h3 class="text-white font-extrabold text-base">${myTeam}의 새 소식이 아직 없습니다</h3>
+                <p class="text-mutedtext text-xs mt-1.5 leading-relaxed">구단과 연동된 최신 뉴스나 이적 정보를 저널리스트들이 준비 중입니다.<br>잠시만 기다려 주세요!</p>
             </div>
         `;
         return;
     }
 
-    bookmarkedNews.forEach(item => {
+    const myTeamLogo = teamLogos[myTeam];
+    const headerHtml = `
+        <div class="flex items-center gap-3 bg-darkbg/40 border border-bordercolor rounded-2xl p-4 mb-2">
+            ${myTeamLogo ? `<img src="${myTeamLogo}" class="w-10 h-10 object-contain bg-white/5 rounded-full p-0.5" alt="${myTeam}">` : ''}
+            <div>
+                <h4 class="text-white font-black text-sm">${myTeam} 팔로잉 피드</h4>
+                <p class="text-mutedtext text-[10px] mt-0.5">응원하는 '${myTeam}'의 모든 소식과 이적 정보를 실시간 모아봅니다.</p>
+            </div>
+        </div>
+    `;
+    
+    const wrapper = document.createElement('div');
+    wrapper.className = "flex flex-col gap-4";
+    wrapper.innerHTML = headerHtml;
+
+    myTeamNews.forEach(item => {
+        const isBookmarked = state.bookmarkedIds.includes(item.id);
         const card = document.createElement('div');
-        card.className = "border border-bordercolor p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all";
-        card.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-                <span class="text-[9px] font-bold px-2 py-0.5 bg-brand/10 border border-brand/20 rounded text-brand uppercase">Saved</span>
-                <span class="text-darkgray text-[10px]">${getRelativeTime(item.created_at)}</span>
-            </div>
-            <h3 class="text-sm font-extrabold text-white leading-snug mb-2">${item.title}</h3>
-            <div class="flex justify-between items-center pt-3 border-t border-bordercolor">
-                <span class="text-xs text-darkgray">${item.reporter}</span>
-                <button class="bookmark-btn" data-id="${item.id}">
-                    <svg class="w-5 h-5 fill-brand text-brand" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </button>
-            </div>
-        `;
+        const highlightClass = "border-2 border-brand bg-brand/5 shadow-lg shadow-brand/10";
+        const adminDeleteBtn = state.adminMode 
+            ? `<button class="delete-btn text-red-500 hover:text-red-400 font-bold text-xs flex items-center gap-1 p-1 rounded transition-colors" data-id="${item.id}">
+                   <span>🗑️</span> 삭제
+               </button>`
+            : '';
+
+        if (item.is_here_we_go) {
+            const fromLogo = item.transfer_info ? teamLogos[item.transfer_info.from] : null;
+            const toLogo = item.transfer_info ? teamLogos[item.transfer_info.to] : null;
+            
+            const fromLogoHtml = fromLogo 
+                ? `<img src="${fromLogo}" class="w-6 h-6 object-contain bg-white/5 rounded-full p-0.5" alt="${item.transfer_info.from}">` 
+                : `<span class="text-xs font-black">🛡️</span>`;
+            const toLogoHtml = toLogo 
+                ? `<img src="${toLogo}" class="w-6 h-6 object-contain bg-white/5 rounded-full p-0.5" alt="${item.transfer_info.to}">` 
+                : `<span class="text-xs font-black">🛡️</span>`;
+
+            card.className = `p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all relative overflow-hidden ${highlightClass}`;
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-3 py-1 bg-[#ff9f00]/10 border border-[#ff9f00]/30 rounded-full text-[#ff9f00] font-black text-[10px] pulse-live">🚨 HERE WE GO!</span>
+                        <span class="px-2 py-0.5 bg-brand text-black font-extrabold text-[9px] rounded-full">🌟 My Team</span>
+                    </div>
+                    <span class="text-darkgray text-[11px]">${getRelativeTime(item.created_at)}</span>
+                </div>
+                <h3 class="text-2xl font-black text-white leading-tight mb-2">${item.title}</h3>
+                
+                ${item.transfer_info ? `
+                <div class="flex items-center gap-4 bg-darkbg/50 border border-bordercolor/80 rounded-xl p-3.5 mb-4 text-xs font-bold text-white">
+                    <div class="flex items-center gap-1.5 flex-1 justify-end">
+                        <span class="truncate">${item.transfer_info.from}</span>
+                        ${fromLogoHtml}
+                    </div>
+                    <span class="text-brand font-black">➔</span>
+                    <div class="flex items-center gap-1.5 flex-1 justify-start">
+                        ${toLogoHtml}
+                        <span class="truncate">${item.transfer_info.to}</span>
+                    </div>
+                    <div class="border-l border-bordercolor pl-3 text-right">
+                        <span class="text-brand block text-[10px] font-black">이적료</span>
+                        <span class="text-[#ff9f00]">${item.transfer_info.cost}</span>
+                    </div>
+                </div>
+                ` : ''}
+
+                <p class="text-sm text-mutedtext leading-relaxed line-clamp-3 mb-4">${item.content}</p>
+                <div class="flex justify-between items-center pt-3.5 border-t border-bordercolor">
+                    <span class="text-xs text-white font-bold">FR ${item.reporter} ✓</span>
+                    <div class="flex items-center gap-3">
+                        ${adminDeleteBtn}
+                        <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
+                            <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            card.className = `p-5 rounded-2xl bg-cardbg cursor-pointer hover:bg-cardhover transition-all ${highlightClass}`;
+            
+            let summaryHtml = '';
+            if (item.summary_points && item.summary_points.length > 0) {
+                summaryHtml = `
+                    <div class="mt-3 bg-darkbg/50 border border-bordercolor/50 rounded-xl p-3 text-xs">
+                        <div class="text-brand font-black mb-1.5 flex items-center gap-1 text-[10px]"><span>🪄</span>AI 요약 리포트</div>
+                        <ul class="space-y-1 text-mutedtext list-disc list-inside">${item.summary_points.map(pt => `<li class="leading-relaxed pl-1">${pt}</li>`).join('')}</ul>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2.5">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-bold px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-amber-500 uppercase">TIER ${item.tier}</span>
+                        <span class="px-2 py-0.5 bg-brand text-black font-extrabold text-[9px] rounded-full">🌟 My Team</span>
+                    </div>
+                    <span class="text-darkgray text-[11px]">${getRelativeTime(item.created_at)}</span>
+                </div>
+                <h3 class="text-base font-extrabold text-white leading-snug mb-2.5">${item.title}</h3>
+                <p class="text-xs text-mutedtext leading-relaxed line-clamp-3">${item.content}</p>
+                ${summaryHtml}
+                <div class="flex justify-between items-center pt-3.5 mt-3.5 border-t border-bordercolor">
+                    <span class="text-xs text-darkgray font-medium">${item.reporter}</span>
+                    <div class="flex items-center gap-3">
+                        ${adminDeleteBtn}
+                        <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
+                            <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
 
         const bookmarkBtn = card.querySelector('.bookmark-btn');
         if (bookmarkBtn) {
@@ -1050,13 +1306,22 @@ function renderFollowingList(container) {
             });
         }
 
+        const deleteBtnEl = card.querySelector('.delete-btn');
+        if (deleteBtnEl) {
+            deleteBtnEl.addEventListener('click', (e) => {
+                deleteArticle(item.id, e);
+            });
+        }
+
         card.addEventListener('click', (e) => {
-            if (e.target.closest('.bookmark-btn')) return;
+            if (e.target.closest('.bookmark-btn') || e.target.closest('.delete-btn')) return;
             openBottomSheet(item);
         });
 
-        container.appendChild(card);
+        wrapper.appendChild(card);
     });
+
+    container.appendChild(wrapper);
 }
 
 function renderLeaguesList(container) {
