@@ -522,7 +522,8 @@ async function deleteArticle(id, event) {
     if (!confirm("🗑️ 이 축구 기사(또는 이적 소식)를 정말로 삭제하시겠습니까?")) return;
 
     try {
-        if (id.startsWith('mock-')) {
+        const stringId = String(id);
+        if (stringId.startsWith('mock-')) {
             // Local Mock News deletion
             const idx = mockNews.findIndex(n => n.id === id);
             if (idx !== -1) mockNews.splice(idx, 1);
