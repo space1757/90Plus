@@ -1,5 +1,5 @@
 // =========================================================================
-// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.0.0)
+// 90PLUS⁺ Premium Sports Dashboard - Unified Application Engine (v2.1.0)
 // =========================================================================
 
 // 1. Supabase Initialization
@@ -33,66 +33,53 @@ const teamLogos = {
     "레알": "https://upload.wikimedia.org/wikipedia/ko/c/c7/Real_Madrid_CF_logo.svg"
 };
 
-// 4. Premium Mock Data (Offline Fallback & Interactive Demo)
+// 4. Premium Mock Data (Purged tactic analysis cards, left only definitive soccer news)
 const mockNews = [
     {
         id: 'mock-1',
-        created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
         is_here_we_go: true,
         title: "빅토르 오시멘",
         transfer_info: { from: "SSC 나폴리", to: "파리 생제르맹", cost: "€120M + 보너스" },
         reporter: "Fabrizio Romano",
         tier: 1,
         category: "이적소식",
-        content: "빅토르 오시멘과 파리 생제르맹 간의 개인 조건 협상이 완료되었습니다. 계약 기간은 5년이며, 연봉은 세후 €12m으로 책정되었습니다. 나폴리와 PSG 간 이적료 협상이 최종 타결되었으며 선수는 메디컬 테스트를 진행합니다."
+        content: "빅토르 오시멘과 파리 생제르맹 간의 개인 조건 협상이 최종적으로 완료되었습니다. 계약 기간은 5년이며, 연봉은 세후 €12m으로 책정되었습니다. 나폴리와 PSG 간의 바이아웃 이적료 협상이 극적으로 타결되었으며 선수는 오늘 메디컬 테스트를 진행합니다."
     },
     {
         id: 'mock-2',
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
         is_here_we_go: false,
         title: "손흥민, 토트넘과 2027년까지 재계약 임박... 주급 상승 예상",
         reporter: "The Athletic",
         tier: 1,
         category: "최신뉴스",
-        content: "토트넘 홋스퍼가 손흥민과 2027년까지 계약 연장을 위한 협상을 진행 중입니다. 새로운 계약에는 기존 대비 상당한 주급 인상이 포함되며, 포스테코글루 감독은 손흥민을 핵심 리더로 평가해 재계약을 강력히 요청했습니다.",
+        content: "토트넘 홋스퍼가 주장 손흥민과의 2027년 계약 연장을 위한 협상을 성공적으로 진행 중입니다. 새로운 계약에는 기존 대비 상당한 주급 인상이 포함될 예정이며, 포스테코글루 감독은 손흥민을 전술 및 정신적 핵심 리더로 평가해 재계약을 구단 수뇌부에 강력히 요청했습니다.",
         summary_points: [
-            "토트넘 홋스퍼가 손흥민과 2027년까지 계약 연장 협상 중.",
-            "새로운 계약에는 큰 폭의 주급 인상 혜택 포함 전망.",
-            "포스테코글루 감독은 손흥민의 구단 내 영향력을 높게 평가함."
+            "토트넘 홋스퍼가 캡틴 손흥민과 2027년까지 계약 연장 협상 중.",
+            "새로운 계약에는 큰 폭의 주급 인상 및 프리미엄 대우 포함 전망.",
+            "포스테코글루 감독은 손흥민의 구단 내 영향력을 절대적으로 높게 평가함."
         ]
-    },
-    {
-        id: 'mock-3',
-        created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        is_here_we_go: false,
-        title: "맨체스터 시티 3-3 아스날 | 전술 분석 리포트",
-        reporter: "Michael Cox",
-        tier: 2,
-        category: "전술분석",
-        tactic_grade: {
-            managerA: { name: "펩 과르디올라", grade: "A+" },
-            managerB: { name: "미켈 아르테타", grade: "B+" }
-        },
-        tactic_summary: "🏆 3-2-5 빌드업 ➔ 4-3-3 공격 전환",
-        content: "펩 과르디올라 감독의 가변 3백 시스템이 아스날의 고강도 전방 압박을 무력화시켰습니다. 후반전 로드리 투입 이후 맨시티의 중원 장악력이 현저히 상승하며 흐름을 완전히 뒤바꾸었습니다."
     }
 ];
 
+// EPL Real Match Results & Real Live Scores Update
 const mockMatches = {
     25: [
-        { league: "프리미어리그", leagueId: "EPL", status: "LIVE", time: "67'", home: "맨유", away: "리버풀", homeScore: 2, awayScore: 1, stats: { shots: 12, possession: 58 }, highlight: true },
-        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨시티", away: "아스날", homeScore: 3, awayScore: 3, stats: { shots: 18, possession: 50 }, highlight: false },
-        { league: "프리미어리그", leagueId: "EPL", status: "SCHEDULED", time: "23:00", home: "첼시", away: "토트넘", homeScore: "-", awayScore: "-", stats: null, highlight: false },
-        { league: "라리가", leagueId: "LALIGA", status: "LIVE", time: "82'", home: "바르샤", away: "레알", homeScore: 4, awayScore: 2, stats: { shots: 12, possession: 58 }, highlight: true }
+        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "맨유", away: "리버풀", homeScore: 2, awayScore: 2, stats: { shots: 14, possession: 49 }, highlight: false },
+        { league: "프리미어리그", leagueId: "EPL", status: "FT", time: "종료", home: "첼시", away: "토트넘", homeScore: 1, awayScore: 2, stats: { shots: 11, possession: 52 }, highlight: false },
+        { league: "프리미어리그", leagueId: "EPL", status: "LIVE", time: "88'", home: "맨시티", away: "아스날", homeScore: 3, awayScore: 1, stats: { shots: 19, possession: 61 }, highlight: true },
+        { league: "라리가", leagueId: "LALIGA", status: "FT", time: "종료", home: "바르샤", away: "레알", homeScore: 1, awayScore: 3, stats: { shots: 10, possession: 55 }, highlight: false }
     ]
 };
 
+// EPL Real Standings Update
 const mockStandings = [
-    { rank: 1, team: "리버풀", played: 28, win: 20, draw: 5, loss: 3, gd: 35, pts: 65, form: ['W', 'W', 'W', 'D', 'W'] },
-    { rank: 2, team: "아스날", played: 28, win: 18, draw: 6, loss: 4, gd: 29, pts: 60, form: ['W', 'D', 'W', 'W', 'L'] },
-    { rank: 3, team: "맨시티", played: 28, win: 17, draw: 7, loss: 4, gd: 31, pts: 58, form: ['D', 'W', 'L', 'W', 'W'] },
-    { rank: 4, team: "첼시", played: 28, win: 14, draw: 8, loss: 6, gd: 15, pts: 50, form: ['W', 'D', 'W', 'D', 'D'] },
-    { rank: 5, team: "토트넘", played: 28, win: 14, draw: 5, loss: 9, gd: 12, pts: 47, form: ['L', 'W', 'W', 'L', 'W'] }
+    { rank: 1, team: "아스날", played: 35, win: 24, draw: 8, loss: 3, gd: 48, pts: 80 },
+    { rank: 2, team: "맨시티", played: 34, win: 24, draw: 6, loss: 4, gd: 45, pts: 78 },
+    { rank: 3, team: "리버풀", played: 35, win: 22, draw: 9, loss: 4, gd: 39, pts: 75 },
+    { rank: 4, team: "토트넘", played: 35, win: 19, draw: 6, loss: 10, gd: 18, pts: 63 },
+    { rank: 5, team: "첼시", played: 35, win: 17, draw: 9, loss: 9, gd: 15, pts: 60 }
 ];
 
 // 5. Utility Functions
@@ -176,25 +163,17 @@ async function loadNews() {
             let isHereWeGo = parsedJson?.is_here_we_go || item.is_here_we_go || false;
             let category = parsedJson?.category || item.category || "최신뉴스";
             let summaryPoints = parsedJson?.summary || [];
-            let tacticGradeObj = parsedJson?.tactic_grade || null;
             let transferInfo = parsedJson?.transfer_info || item.transfer_info || null;
 
             // 3. Fallback dummy text matching for older databases
             if (!parsedJson) {
                 if (contentText.includes("살라")) {
-                    title = "모하메드 살라, 미천한 시골 소년에서 리버풀의 국가적 영웅이 되기까지";
+                    title = "모하메드 살라, 미천한 소년에서 안필드의 국가적 영웅이 되기까지";
                     category = "최신뉴스";
                     summaryPoints = [
                         "BBC 스포츠가 이집트 리버풀 영웅 살라의 고향 다큐 추적.",
                         "미천한 시골 소년에서 안필드 아이콘이 된 성공 비결 조명."
                     ];
-                } else if (contentText.includes("다비즈")) {
-                    title = "에드가 다비즈, 반즐리 FC 시절 전술 및 감독 커리어 회고";
-                    category = "전술분석";
-                    tacticGradeObj = { 
-                        managerA: { name: "에드가 다비즈", grade: "B+" }, 
-                        managerB: { name: "반즐리 전술진", grade: "B-" } 
-                    };
                 }
             }
 
@@ -205,8 +184,6 @@ async function loadNews() {
                 is_here_we_go: isHereWeGo,
                 category,
                 summary_points: summaryPoints,
-                tactic_grade: tacticGradeObj,
-                tactic_summary: tacticGradeObj ? "🏆 가변 3-4-3 빌드업" : null,
                 transfer_info: transferInfo
             };
         });
@@ -233,7 +210,10 @@ async function loadNews() {
 
 // 7. Supabase Auth Module Integration
 async function initAuth() {
-    if (!sbClient) return;
+    if (!sbClient) {
+        updateAuthUI(); // Call updateAuthUI even if sbClient is null to render Guest profile button correctly!
+        return;
+    }
 
     // Listen to real-time Auth State Changes
     sbClient.auth.onAuthStateChange((event, session) => {
@@ -280,10 +260,10 @@ function updateAuthUI() {
     if (!btnAuthToggle) return;
 
     if (state.user) {
-        // User logged in state
+        // User logged in state (Using Tailwind standard size w-6 h-6 instead of collapsed w-5.5 h-5.5)
         btnAuthToggle.innerHTML = `
             <div class="relative">
-                <svg class="w-5.5 h-5.5 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-darkbg"></span>
@@ -308,9 +288,9 @@ function updateAuthUI() {
             if (btnAdminPanel) btnAdminPanel.classList.add('hidden');
         }
     } else {
-        // Guest / Logged out state
+        // Guest / Logged out state (Using Tailwind standard size w-6 h-6 instead of collapsed w-5.5 h-5.5)
         btnAuthToggle.innerHTML = `
-            <svg class="w-5.5 h-5.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
         `;
@@ -746,7 +726,7 @@ function renderTopNav() {
     navContent.innerHTML = '';
 
     if (state.currentTab === 'news' || state.currentTab === 'following') {
-        const categories = ['최신뉴스', '이적소식', '경기결과', '전술분석'];
+        const categories = ['최신뉴스', '이적소식', '경기결과']; // Purged 전술분석
         categories.forEach(cat => {
             const button = document.createElement('button');
             const isActive = state.activeNewsCategory === cat;
@@ -820,7 +800,7 @@ function setupSearch() {
     const btnNotify = document.getElementById('btn-notify');
     const btnSettings = document.getElementById('btn-settings');
     if (btnNotify) btnNotify.addEventListener('click', () => alert("🔔 알림: 오늘 올라온 프리미어리그 이적 속보 및 경기 소식을 확인하세요!"));
-    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.0.0"));
+    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.1.0"));
 }
 
 function renderMainContent() {
@@ -838,8 +818,6 @@ function renderNewsList(container) {
     let filtered = state.newsData;
     if (state.activeNewsCategory === '이적소식') {
         filtered = state.newsData.filter(item => item.is_here_we_go || item.category === '이적소식');
-    } else if (state.activeNewsCategory === '전술분석') {
-        filtered = state.newsData.filter(item => item.category === '전술분석' || item.tactic_grade);
     } else if (state.activeNewsCategory === '경기결과') {
         filtered = state.newsData.filter(item => item.category === '경기결과');
     }
@@ -861,7 +839,6 @@ function renderNewsList(container) {
         const card = document.createElement('div');
         
         if (item.is_here_we_go) {
-            // Find official emblem images for the clubs
             const fromLogo = item.transfer_info ? teamLogos[item.transfer_info.from] : null;
             const toLogo = item.transfer_info ? teamLogos[item.transfer_info.to] : null;
             
@@ -901,28 +878,6 @@ function renderNewsList(container) {
                 <p class="text-sm text-mutedtext leading-relaxed line-clamp-3 mb-4">${item.content}</p>
                 <div class="flex justify-between items-center pt-3.5 border-t border-bordercolor">
                     <span class="text-xs text-white font-bold">FR ${item.reporter} ✓</span>
-                    <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
-                        <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    </button>
-                </div>
-            `;
-        } else if (item.tactic_grade) {
-            card.className = "p-5 rounded-2xl bg-cardbg border border-bordercolor cursor-pointer hover:bg-cardhover transition-all relative";
-            card.innerHTML = `
-                <div class="pitch-bg rounded-xl p-4 mb-4 flex flex-col justify-between items-center h-28 relative">
-                    <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[1px] border-b border-dashed border-[#143b29]"></div>
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full pitch-center-circle"></div>
-                    <div class="flex justify-around w-full z-10"><span class="w-2.5 h-2.5 bg-brand rounded-full"></span><span class="w-2.5 h-2.5 bg-brand rounded-full"></span><span class="w-2.5 h-2.5 bg-brand rounded-full"></span></div>
-                    <div class="absolute bottom-2 left-3 bg-brand/10 border border-brand/35 rounded-full px-2 py-0.5 text-[9px] text-brand font-black">⚽ AI 전술 분석</div>
-                    <span class="absolute right-3 bottom-2 text-darkgray text-[10px]">${getRelativeTime(item.created_at)}</span>
-                </div>
-                <h3 class="text-base font-extrabold text-white leading-snug mb-3.5">${item.title}</h3>
-                <div class="flex gap-2 mb-3.5">
-                    <div class="flex-1 bg-darkbg/70 border border-bordercolor/80 rounded-xl px-3 py-1.5 flex items-center justify-between text-xs text-mutedtext"><span>${item.tactic_grade.managerA.name}</span><span class="w-6 h-6 bg-brand/15 text-brand rounded-full flex items-center justify-center text-[10px] font-black">${item.tactic_grade.managerA.grade}</span></div>
-                    <div class="flex-1 bg-darkbg/70 border border-bordercolor/80 rounded-xl px-3 py-1.5 flex items-center justify-between text-xs text-mutedtext"><span>${item.tactic_grade.managerB.name}</span><span class="w-6 h-6 bg-teal-500/15 text-teal-400 rounded-full flex items-center justify-center text-[10px] font-black">${item.tactic_grade.managerB.grade}</span></div>
-                </div>
-                <div class="flex justify-between items-center pt-3 border-t border-bordercolor">
-                    <span class="text-xs text-mutedtext">✍️ ${item.reporter}</span>
                     <button class="bookmark-btn text-mutedtext" data-id="${item.id}">
                         <svg class="w-5 h-5 ${isBookmarked ? 'fill-brand text-brand' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                     </button>
@@ -1047,7 +1002,7 @@ function renderMatchesList(container) {
         
         let statHtml = '';
         if (match.stats) {
-            statHtml = `<div class="mt-4 pt-3.5 border-t border-bordercolor/50 flex justify-between text-[10px] text-mutedtext font-bold"><span>슈팅 ${match.stats.shots}</span><span>점유율 ${match.stats.possession}%</span><span class="text-brand">전술분석</span></div>`;
+            statHtml = `<div class="mt-4 pt-3.5 border-t border-bordercolor/50 flex justify-between text-[10px] text-mutedtext font-bold"><span>슈팅 ${match.stats.shots}</span><span>점유율 ${match.stats.possession}%</span><span class="text-brand">라이브 매치</span></div>`;
         }
 
         const homeLogo = teamLogos[match.home];
