@@ -1615,7 +1615,11 @@ function setupSearch() {
             alert(`🔔 [${myTeam}] 실시간 알림 피드 요약\n\n최근 업데이트된 소식 총 ${matching.length}건 중 최신 3건:\n\n${summaryText}`);
         });
     }
-    if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.4.0"));
+    if (btnSettings) {
+        btnSettings.addEventListener('click', () => {
+            alert("⚙️ 90Plus 설정 & 정보\n\n버전: v2.5.0 (최신 버전)\n개발사: Sportrax AI (스포트랙스 AI)\n\n© 2026 Sportrax AI. All rights reserved.");
+        });
+    }
 }
 
 function renderMainContent() {
