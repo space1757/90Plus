@@ -95,6 +95,29 @@ function nicknameToEmail(nickname) {
     return `${hex}@90plus.co`;
 }
 
+async function registerProfile(id, nickname, favTeam) {
+    const role = nickname.toLowerCase() === 'adminofficial' ? 'admin' : 'user';
+    const profile = { id, nickname, fav_team: favTeam, role };
+    
+    // Always store locally as fallback
+    const localUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+    const existingIndex = localUsers.findIndex(u => u.nickname.toLowerCase() === nickname.toLowerCase());
+    if (existingIndex !== -1) {
+        localUsers[existingIndex] = profile;
+    } else {
+        localUsers.push(profile);
+    }
+    localStorage.setItem('90plus_offline_users', JSON.stringify(localUsers));
+
+    if (sbClient) {
+        try {
+            await sbClient.from('profiles').upsert(profile);
+        } catch(e) {
+            console.warn("Supabase profiles table upsert failed (it may not exist):", e);
+        }
+    }
+}
+
 function getRelativeTime(dateString) {
     const diffMs = new Date() - new Date(dateString);
     const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -242,13 +265,14 @@ async function loadNews() {
 
 // 7. Supabase Auth Module Integration
 async function initAuth() {
+    const offlineUser = localStorage.getItem('90plus_offline_user');
     if (!sbClient) {
-        const offlineUser = localStorage.getItem('90plus_offline_user');
         if (offlineUser) {
             try {
                 state.user = JSON.parse(offlineUser);
                 state.adminMode = state.user ? (
                     state.user.user_metadata?.nickname === 'admin' ||
+                    state.user.user_metadata?.nickname === 'adminofficial' ||
                     state.user.user_metadata?.role === 'admin'
                 ) : false;
             } catch (e) {}
@@ -264,7 +288,9 @@ async function initAuth() {
         // Define admin accounts (admin nickname, virtual admin email, or explicit metadata claim)
         state.adminMode = state.user ? (
             state.user.user_metadata?.nickname === 'admin' || 
+            state.user.user_metadata?.nickname === 'adminofficial' || 
             state.user.email === nicknameToEmail('admin') ||
+            state.user.email === nicknameToEmail('adminofficial') ||
             state.user.user_metadata?.role === 'admin'
         ) : false;
         
@@ -278,7 +304,9 @@ async function initAuth() {
         state.user = session?.user || null;
         state.adminMode = state.user ? (
             state.user.user_metadata?.nickname === 'admin' || 
+            state.user.user_metadata?.nickname === 'adminofficial' || 
             state.user.email === nicknameToEmail('admin') ||
+            state.user.email === nicknameToEmail('adminofficial') ||
             state.user.user_metadata?.role === 'admin'
         ) : false;
     } catch (e) {
@@ -441,30 +469,60 @@ function setupAuthEvents() {
             const password = document.getElementById('login-password').value;
             const email = nicknameToEmail(nickname);
 
+            // Intercept static admin credentials
+            if (nickname.toLowerCase() === 'adminofficial' && password === '090829') {
+                const adminUser = {
+                    id: 'admin-fixed-id',
+                    email: email,
+                    user_metadata: { nickname: 'adminofficial', role: 'admin', fav_team: '' }
+                };
+                localStorage.setItem('90plus_offline_user', JSON.stringify(adminUser));
+                
+                await registerProfile('admin-fixed-id', 'adminofficial', '');
+
+                state.user = adminUser;
+                state.adminMode = true;
+                updateAuthUI();
+                alert("🔓 관리자 계정 로그인 성공!");
+                authBackdrop.classList.remove('open');
+                loadNews();
+                return;
+            }
+
             if (!sbClient) {
-                // Offline fallback login
-                const offlineUser = localStorage.getItem('90plus_offline_user');
-                if (offlineUser) {
-                    try {
-                        const parsed = JSON.parse(offlineUser);
-                        if (parsed.user_metadata?.nickname.toLowerCase() === nickname.toLowerCase() && password.length >= 6) {
-                            state.user = parsed;
-                            state.adminMode = nickname.toLowerCase() === 'admin';
-                            updateAuthUI();
-                            alert("🔓 [오프라인 모드] 로그인 성공!");
-                            authBackdrop.classList.remove('open');
-                            loadNews();
-                            return;
-                        }
-                    } catch(e) {}
+                // Offline fallback login matching local list
+                const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+                const foundUser = offlineUsers.find(u => u.nickname.toLowerCase() === nickname.toLowerCase());
+
+                if (foundUser && password.length >= 6) {
+                    const mockUser = {
+                        id: foundUser.id,
+                        email: email,
+                        user_metadata: { nickname: foundUser.nickname, fav_team: foundUser.fav_team, role: foundUser.role }
+                    };
+                    localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
+                    state.user = mockUser;
+                    state.adminMode = foundUser.role === 'admin';
+                    updateAuthUI();
+                    alert("🔓 [오프라인 모드] 로그인 성공!");
+                    authBackdrop.classList.remove('open');
+                    loadNews();
+                    return;
                 }
-                alert("❌ [오프라인 모드] 로그인 실패: 일치하는 가입 정보가 없거나 패스워드가 잘못되었습니다.");
+                alert("❌ [오프라인 모드] 로그인 실패: 일치하는 가입 정보가 없거나 패스워드가 잘못되었습니다 (비밀번호 6자 이상 필요).");
                 return;
             }
 
             try {
-                const { error } = await sbClient.auth.signInWithPassword({ email, password });
+                const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+                
+                if (data && data.user) {
+                    const nick = data.user.user_metadata?.nickname || nickname;
+                    const fav = data.user.user_metadata?.fav_team || '';
+                    await registerProfile(data.user.id, nick, fav);
+                }
+
                 alert("🔓 로그인 성공! 환영합니다.");
                 authBackdrop.classList.remove('open');
             } catch (err) {
@@ -481,14 +539,23 @@ function setupAuthEvents() {
             const password = document.getElementById('signup-password').value;
             const email = nicknameToEmail(nickname);
 
+            if (nickname.toLowerCase() === 'adminofficial') {
+                alert("❌ 'adminofficial'은 예약된 관리자 닉네임이므로 새로 가입할 수 없습니다.");
+                return;
+            }
+
             if (!sbClient) {
                 // Offline fallback signup
+                const newUserId = 'offline-' + Date.now();
                 const mockUser = {
-                    id: 'offline-' + Date.now(),
+                    id: newUserId,
                     email: email,
-                    user_metadata: { nickname, fav_team: favTeam }
+                    user_metadata: { nickname, fav_team: favTeam, role: 'user' }
                 };
+                
+                await registerProfile(newUserId, nickname, favTeam);
                 localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
+                
                 alert("✉️ [오프라인 모드] 가입 성공! 즉시 로그인해 보세요.");
                 switchAuthTab('login');
                 const loginNickInput = document.getElementById('login-nickname');
@@ -497,7 +564,7 @@ function setupAuthEvents() {
             }
 
             try {
-                const { error } = await sbClient.auth.signUp({
+                const { data, error } = await sbClient.auth.signUp({
                     email,
                     password,
                     options: {
@@ -505,6 +572,11 @@ function setupAuthEvents() {
                     }
                 });
                 if (error) throw error;
+                
+                if (data && data.user) {
+                    await registerProfile(data.user.id, nickname, favTeam);
+                }
+
                 alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
                 switchAuthTab('login');
                 const loginNickInput = document.getElementById('login-nickname');
@@ -836,31 +908,53 @@ function setupAdminPanelEvents() {
     const tabMatchResult = document.getElementById('admin-tab-match-result');
     const formAdminMatchResult = document.getElementById('form-admin-match-result');
 
+    const tabUsers = document.getElementById('admin-tab-users');
+    const panelUsers = document.getElementById('panel-admin-users');
+
     if (tabWrite && tabTransfer && tabMatchResult && formAdminNews && formAdminTransfer && formAdminMatchResult) {
         tabWrite.addEventListener('click', () => {
             tabWrite.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
             tabTransfer.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             tabMatchResult.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            if (tabUsers) tabUsers.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             formAdminNews.classList.remove('hidden');
             formAdminTransfer.classList.add('hidden');
             formAdminMatchResult.classList.add('hidden');
+            if (panelUsers) panelUsers.classList.add('hidden');
         });
         tabTransfer.addEventListener('click', () => {
             tabTransfer.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
             tabWrite.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             tabMatchResult.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            if (tabUsers) tabUsers.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             formAdminTransfer.classList.remove('hidden');
             formAdminNews.classList.add('hidden');
             formAdminMatchResult.classList.add('hidden');
+            if (panelUsers) panelUsers.classList.add('hidden');
         });
         tabMatchResult.addEventListener('click', () => {
             tabMatchResult.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
             tabWrite.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             tabTransfer.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+            if (tabUsers) tabUsers.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
             formAdminMatchResult.classList.remove('hidden');
             formAdminNews.classList.add('hidden');
             formAdminTransfer.classList.add('hidden');
+            if (panelUsers) panelUsers.classList.add('hidden');
         });
+        if (tabUsers && panelUsers) {
+            tabUsers.addEventListener('click', () => {
+                tabUsers.className = "flex-1 pb-3 border-b-2 border-brand text-brand";
+                tabWrite.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+                tabTransfer.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+                tabMatchResult.className = "flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white";
+                panelUsers.classList.remove('hidden');
+                formAdminNews.classList.add('hidden');
+                formAdminTransfer.classList.add('hidden');
+                formAdminMatchResult.classList.add('hidden');
+                loadUserProfiles();
+            });
+        }
     }
 
     const btnGenerateAi = document.getElementById('btn-generate-ai-text');
@@ -2027,8 +2121,158 @@ function setupRealtimeSync() {
         .subscribe();
 }
 
+// 9.1 User Profile Management APIs
+async function loadUserProfiles() {
+    const tbody = document.getElementById('admin-user-list-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-mutedtext">불러오는 중...</td></tr>';
+    
+    let profiles = [];
+    const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+    
+    // Ensure adminofficial is in offline users list
+    const hasAdmin = offlineUsers.some(u => u.nickname.toLowerCase() === 'adminofficial');
+    if (!hasAdmin) {
+        offlineUsers.push({ id: 'admin-fixed-id', nickname: 'adminofficial', role: 'admin', fav_team: '' });
+        localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
+    }
+
+    if (sbClient) {
+        try {
+            const { data, error } = await sbClient
+                .from('profiles')
+                .select('*');
+            if (error) throw error;
+            profiles = data || [];
+            
+            // Merge profiles with offline profiles just in case
+            const profileIds = new Set(profiles.map(p => p.id));
+            offlineUsers.forEach(u => {
+                if (!profileIds.has(u.id)) {
+                    profiles.push(u);
+                }
+            });
+        } catch(e) {
+            console.warn("Supabase profiles fetch failed, fallback to local users:", e);
+            profiles = offlineUsers;
+        }
+    } else {
+        profiles = offlineUsers;
+    }
+
+    if (profiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-mutedtext">가입된 회원이 없습니다.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = profiles.map(user => {
+        const isMe = state.user && (
+            state.user.id === user.id || 
+            state.user.user_metadata?.nickname === user.nickname
+        );
+        
+        const roleLabel = user.role === 'admin' ? '관리자' : '일반회원';
+        const roleBadgeColor = user.role === 'admin' ? 'bg-brand/20 text-brand border-brand/30' : 'bg-mutedtext/10 text-mutedtext border-bordercolor';
+        
+        const toggleRoleBtn = isMe 
+            ? '' 
+            : `<button onclick="window.manageToggleRole('${user.id}', '${user.nickname}', '${user.role}')" class="text-xs bg-cardbg hover:bg-cardhover border border-bordercolor hover:border-brand/40 px-2.5 py-1.5 rounded text-white transition-colors">
+                   권한 변경
+               </button>`;
+        
+        const deleteBtn = isMe 
+            ? '<span class="text-mutedtext font-medium text-[10px] pr-2">본인</span>' 
+            : `<button onclick="window.manageDeleteUser('${user.id}', '${user.nickname}')" class="text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 px-2.5 py-1.5 rounded text-red-400 transition-colors ml-1.5">
+                   탈퇴
+               </button>`;
+
+        return `
+            <tr class="border-b border-bordercolor/30 hover:bg-cardhover/20 transition-colors">
+                <td class="py-3 pr-2 font-bold">${user.nickname}</td>
+                <td class="py-3 px-2">
+                    <span class="px-2 py-0.5 rounded-full border text-[10px] font-semibold ${roleBadgeColor}">${roleLabel}</span>
+                </td>
+                <td class="py-3 px-2 text-mutedtext">${user.fav_team || '없음'}</td>
+                <td class="py-3 pl-2 text-right">
+                    <div class="inline-flex items-center">
+                        ${toggleRoleBtn}
+                        ${deleteBtn}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+window.manageToggleRole = async function(userId, nickname, currentRole) {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    if (!confirm(`👤 '${nickname}' 회원의 권한을 '${newRole === 'admin' ? '관리자' : '일반회원'}'(으)로 변경하시겠습니까?`)) return;
+
+    // Update Local Storage
+    const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+    const localUser = offlineUsers.find(u => u.id === userId || u.nickname === nickname);
+    if (localUser) {
+        localUser.role = newRole;
+        localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
+    }
+
+    // Update Supabase profiles table
+    if (sbClient) {
+        try {
+            const { error } = await sbClient
+                .from('profiles')
+                .update({ role: newRole })
+                .eq('id', userId);
+            if (error) throw error;
+        } catch(e) {
+            console.warn("Supabase profiles table role update failed:", e);
+        }
+    }
+
+    alert(`👤 '${nickname}' 회원의 권한이 성공적으로 변경되었습니다.`);
+    loadUserProfiles();
+};
+
+window.manageDeleteUser = async function(userId, nickname) {
+    if (!confirm(`⚠️ 정말로 '${nickname}' 회원을 강제 탈퇴 처리하시겠습니까? 회원의 가입 정보가 완전히 제거됩니다.`)) return;
+
+    // Update Local Storage
+    let offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+    offlineUsers = offlineUsers.filter(u => u.id !== userId && u.nickname !== nickname);
+    localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
+
+    // Update Supabase profiles table
+    if (sbClient) {
+        try {
+            const { error } = await sbClient
+                .from('profiles')
+                .delete()
+                .eq('id', userId);
+            if (error) throw error;
+        } catch(e) {
+            console.warn("Supabase profiles table user deletion failed:", e);
+        }
+    }
+
+    alert(`🗑️ '${nickname}' 회원이 완전히 탈퇴 처리되었습니다.`);
+    loadUserProfiles();
+};
+
 // 10. App Entry Point
 document.addEventListener('DOMContentLoaded', () => {
+    // Pre-seed offline admin profile if not exists
+    const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+    const hasAdmin = offlineUsers.some(u => u.nickname.toLowerCase() === 'adminofficial');
+    if (!hasAdmin) {
+        offlineUsers.push({
+            id: 'admin-fixed-id',
+            nickname: 'adminofficial',
+            role: 'admin',
+            fav_team: ''
+        });
+        localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
+    }
+
     // Initializing SPA Routers & Event Listeners
     setupTabNavigation();
     setupSearch();

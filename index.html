@@ -281,6 +281,7 @@
                 <button id="admin-tab-write" class="flex-1 pb-3 border-b-2 border-brand text-brand">✍️ AI 뉴스 작성</button>
                 <button id="admin-tab-transfer" class="flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white">🚨 이적 등록</button>
                 <button id="admin-tab-match-result" class="flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white">⚽ 경기 결과 등록</button>
+                <button id="admin-tab-users" class="flex-1 pb-3 border-b-2 border-transparent text-mutedtext hover:text-white">👥 계정 관리</button>
             </div>
 
             <!-- Form 1: AI News Writer -->
@@ -539,6 +540,28 @@
                     ⚽ 경기 결과 등록 발행
                 </button>
             </form>
+
+            <!-- Panel 4: User Account Management -->
+            <div id="panel-admin-users" class="space-y-4 hidden">
+                <div class="bg-darkbg/50 border border-bordercolor rounded-xl p-4">
+                    <h3 class="text-xs font-bold text-brand mb-3 flex items-center gap-1.5"><span>👥</span>가입된 회원 계정 목록</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-bordercolor text-mutedtext">
+                                    <th class="py-2 pr-2">닉네임</th>
+                                    <th class="py-2 px-2">권한</th>
+                                    <th class="py-2 px-2">선호 구단</th>
+                                    <th class="py-2 pl-2 text-right">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-user-list-body" class="divide-y divide-bordercolor/40 text-white">
+                                <!-- Dynamic rows loaded from profiles table or localStorage -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
