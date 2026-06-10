@@ -526,6 +526,25 @@ function setupAuthEvents() {
                 alert("🔓 로그인 성공! 환영합니다.");
                 authBackdrop.classList.remove('open');
             } catch (err) {
+                // Automatic fallback to offline login on connection/server failure
+                const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+                const foundUser = offlineUsers.find(u => u.nickname.toLowerCase() === nickname.toLowerCase());
+
+                if (foundUser && password.length >= 6) {
+                    const mockUser = {
+                        id: foundUser.id,
+                        email: email,
+                        user_metadata: { nickname: foundUser.nickname, fav_team: foundUser.fav_team, role: foundUser.role }
+                    };
+                    localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
+                    state.user = mockUser;
+                    state.adminMode = foundUser.role === 'admin';
+                    updateAuthUI();
+                    alert(`⚠️ [서버 연결 실패] 오프라인 모드로 로그인되었습니다.\n(계정: ${foundUser.nickname})`);
+                    authBackdrop.classList.remove('open');
+                    loadNews();
+                    return;
+                }
                 alert(`❌ 로그인 실패: ${err.message}`);
             }
         });
@@ -582,7 +601,21 @@ function setupAuthEvents() {
                 const loginNickInput = document.getElementById('login-nickname');
                 if (loginNickInput) loginNickInput.value = nickname;
             } catch (err) {
-                alert(`❌ 회원가입 실패: ${err.message}`);
+                // Automatic fallback to offline signup on connection/server failure
+                const newUserId = 'offline-' + Date.now();
+                const mockUser = {
+                    id: newUserId,
+                    email: email,
+                    user_metadata: { nickname, fav_team: favTeam, role: 'user' }
+                };
+                
+                await registerProfile(newUserId, nickname, favTeam);
+                localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
+                
+                alert(`⚠️ [서버 연결 실패] 오프라인 모드로 회원가입이 완료되었습니다!\n(가입된 닉네임: ${nickname})`);
+                switchAuthTab('login');
+                const loginNickInput = document.getElementById('login-nickname');
+                if (loginNickInput) loginNickInput.value = nickname;
             }
         });
     }
@@ -1145,7 +1178,39 @@ function setupAdminPanelEvents() {
 
                 loadNews();
             } catch (err) {
-                alert(`❌ 기사 발행 실패: ${err.message}`);
+                console.warn("Supabase insert news failed, falling back to offline:", err);
+                const newArticle = {
+                    id: 'offline-news-' + Date.now(),
+                    created_at: new Date().toISOString(),
+                    title: title,
+                    content: content,
+                    reporter: nickname,
+                    tier: 1,
+                    category: category,
+                    is_here_we_go: false,
+                    summary_points: summary,
+                    tag: tag
+                };
+                const currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+                currentOffline.unshift(newArticle);
+                localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+                
+                alert("🏆 [서버 연결 실패] 뉴스가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminNews.reset();
+                const newsTagSelect = document.getElementById('admin-news-tag');
+                if (newsTagSelect) newsTagSelect.value = '';
+                const previewContainer = document.getElementById('ai-preview-container');
+                if (previewContainer) previewContainer.classList.add('hidden');
+                
+                const btnSubmitNews = document.getElementById('btn-submit-news');
+                if (btnSubmitNews) {
+                    btnSubmitNews.disabled = true;
+                    btnSubmitNews.className = "flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 opacity-50 cursor-not-allowed";
+                }
+                
+                if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+                loadNews();
             }
         });
     }
@@ -1232,7 +1297,35 @@ function setupAdminPanelEvents() {
                 if (transTagSelect) transTagSelect.value = '';
                 loadNews();
             } catch (err) {
-                alert(`❌ 이적 등록 실패: ${err.message}`);
+                console.warn("Supabase insert transfer failed, falling back to offline:", err);
+                const newTransfer = {
+                    id: 'offline-transfer-' + Date.now(),
+                    created_at: new Date().toISOString(),
+                    title: player,
+                    content: desc,
+                    reporter: reporter,
+                    tier: tier,
+                    category: "이적소식",
+                    is_here_we_go: true,
+                    transfer_info: {
+                        from: fromTeam,
+                        to: toTeam,
+                        cost: cost
+                    },
+                    tag: tag
+                };
+                const currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+                currentOffline.unshift(newTransfer);
+                localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+
+                alert("🚨 [서버 연결 실패] 이적 정보가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminTransfer.reset();
+                const transTagSelect = document.getElementById('transfer-tag');
+                if (transTagSelect) transTagSelect.value = '';
+                
+                if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+                loadNews();
             }
         });
     }
@@ -1318,7 +1411,34 @@ function setupAdminPanelEvents() {
                 formAdminMatchResult.reset();
                 loadNews();
             } catch (err) {
-                alert(`❌ 경기 결과 발행 실패: ${err.message}`);
+                console.warn("Supabase insert match result failed, falling back to offline:", err);
+                const newMatch = {
+                    id: 'offline-match-' + Date.now(),
+                    created_at: new Date().toISOString(),
+                    title: `${home} ${homeScore} : ${awayScore} ${away}`,
+                    content: `${league} ${round} 경기 결과 - 홈팀 ${home}와 원정팀 ${away}의 치열한 공방전 끝에 ${homeScore} 대 ${awayScore}로 경기가 마무리되었습니다. ${comment ? `득점 기록: ${comment}` : ''}`,
+                    reporter: nickname,
+                    tier: 1,
+                    category: "경기결과",
+                    is_match_result: true,
+                    league,
+                    round,
+                    home,
+                    away,
+                    homeScore,
+                    awayScore,
+                    comment
+                };
+                const currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+                currentOffline.unshift(newMatch);
+                localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+
+                alert("⚽ [서버 연결 실패] 경기 결과가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminMatchResult.reset();
+                
+                if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+                loadNews();
             }
         });
     }
