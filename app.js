@@ -932,7 +932,7 @@ function triggerFavTeamAlert() {
     if (!myTeam) return;
 
     const hasMyTeamNews = state.newsData.some(item => 
-        item.tag === myTeam ||
+        (Array.isArray(item.tag) ? item.tag.includes(myTeam) : item.tag === myTeam) ||
         (item.is_match_result && (item.home === myTeam || item.away === myTeam)) ||
         item.title.includes(myTeam) || 
         item.content.includes(myTeam)
@@ -1096,7 +1096,7 @@ function setupAdminPanelEvents() {
             const summary = summaryRaw ? summaryRaw.split('\n').map(s => s.trim()).filter(Boolean) : [];
             const nickname = state.user ? (state.user.user_metadata?.nickname || state.user.user_metadata?.name || "90PLUS 기자") : "90PLUS AI";
 
-            const tag = document.getElementById('admin-news-tag').value;
+            const tag = state.selectedNewsTags;
 
             const richPayload = {
                 title: title,
@@ -1132,8 +1132,7 @@ function setupAdminPanelEvents() {
                 alert("🏆 [오프라인 모드] 뉴스가 로컬 브라우저에 임시 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminNews.reset();
-                const newsTagSelect = document.getElementById('admin-news-tag');
-                if (newsTagSelect) newsTagSelect.value = '';
+                initTagSelectors();
                 const previewContainer = document.getElementById('ai-preview-container');
                 if (previewContainer) previewContainer.classList.add('hidden');
                 
@@ -1165,8 +1164,7 @@ function setupAdminPanelEvents() {
                 document.getElementById('admin-backdrop').classList.remove('open');
                 
                 formAdminNews.reset();
-                const newsTagSelect = document.getElementById('admin-news-tag');
-                if (newsTagSelect) newsTagSelect.value = '';
+                initTagSelectors();
                 const previewContainer = document.getElementById('ai-preview-container');
                 if (previewContainer) previewContainer.classList.add('hidden');
                 
@@ -1198,8 +1196,7 @@ function setupAdminPanelEvents() {
                 alert("🏆 [서버 연결 실패] 뉴스가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminNews.reset();
-                const newsTagSelect = document.getElementById('admin-news-tag');
-                if (newsTagSelect) newsTagSelect.value = '';
+                initTagSelectors();
                 const previewContainer = document.getElementById('ai-preview-container');
                 if (previewContainer) previewContainer.classList.add('hidden');
                 
@@ -1226,7 +1223,7 @@ function setupAdminPanelEvents() {
             const tier = parseInt(document.getElementById('transfer-tier').value, 10);
             const desc = document.getElementById('transfer-desc').value.trim();
 
-            const tag = document.getElementById('transfer-tag').value;
+            const tag = state.selectedTransferTags;
 
             const transferPayload = {
                 title: player,
@@ -1270,8 +1267,7 @@ function setupAdminPanelEvents() {
                 alert("🚨 [오프라인 모드] 이적 정보가 로컬 브라우저에 임시 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminTransfer.reset();
-                const transTagSelect = document.getElementById('transfer-tag');
-                if (transTagSelect) transTagSelect.value = '';
+                initTagSelectors();
                 
                 if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
                 loadNews();
@@ -1293,8 +1289,8 @@ function setupAdminPanelEvents() {
 
                 alert("🚨 HERE WE GO! 선수 이적 정보 카드가 즉시 등록 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
-                const transTagSelect = document.getElementById('transfer-tag');
-                if (transTagSelect) transTagSelect.value = '';
+                formAdminTransfer.reset();
+                initTagSelectors();
                 loadNews();
             } catch (err) {
                 console.warn("Supabase insert transfer failed, falling back to offline:", err);
@@ -1321,8 +1317,7 @@ function setupAdminPanelEvents() {
                 alert("🚨 [서버 연결 실패] 이적 정보가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminTransfer.reset();
-                const transTagSelect = document.getElementById('transfer-tag');
-                if (transTagSelect) transTagSelect.value = '';
+                initTagSelectors();
                 
                 if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
                 loadNews();
@@ -1588,7 +1583,38 @@ function setupSearch() {
 
     const btnNotify = document.getElementById('btn-notify');
     const btnSettings = document.getElementById('btn-settings');
-    if (btnNotify) btnNotify.addEventListener('click', () => alert("🔔 알림: 오늘 올라온 프리미어리그 이적 속보 소식을 확인하세요!"));
+    if (btnNotify) {
+        btnNotify.addEventListener('click', () => {
+            if (!state.user) {
+                alert("🔔 알림:\n로그인 후 마이팀 선호 구단을 설정하시면, 실시간 선호팀 소식을 요약 알림으로 신속하게 받아보실 수 있습니다!");
+                return;
+            }
+            const myTeam = state.user.user_metadata?.fav_team;
+            if (!myTeam) {
+                alert("🔔 알림:\n설정된 선호 구단이 없습니다. 우측 상단 프로필 버튼을 누르고 선호하는 구단을 등록해 보세요!");
+                return;
+            }
+
+            // Find news matching their favorite team
+            const matching = state.newsData.filter(item => 
+                (Array.isArray(item.tag) ? item.tag.includes(myTeam) : item.tag === myTeam) ||
+                (item.is_match_result && (item.home === myTeam || item.away === myTeam)) ||
+                item.title.includes(myTeam) ||
+                item.content.includes(myTeam)
+            );
+
+            if (matching.length === 0) {
+                alert(`🔔 [${myTeam}] 알림:\n현재 등록된 선호팀 관련 최신 소식이 없습니다. 실시간 업데이트가 올라오면 알려드리겠습니다!`);
+                return;
+            }
+
+            const summaryText = matching.slice(0, 3).map((art, idx) => {
+                return `${idx + 1}. [${art.category}] ${art.title} (${getRelativeTime(art.created_at)})`;
+            }).join('\n\n');
+
+            alert(`🔔 [${myTeam}] 실시간 알림 피드 요약\n\n최근 업데이트된 소식 총 ${matching.length}건 중 최신 3건:\n\n${summaryText}`);
+        });
+    }
     if (btnSettings) btnSettings.addEventListener('click', () => alert("⚙️ 설정: 90plus 프리미엄 스포츠 매거진 v2.4.0"));
 }
 
@@ -1636,7 +1662,7 @@ function renderNewsList(container) {
 
         // Check if article matches user's favorite EPL team (Highlight with lime borders!)
         const isFavTeamMatch = myTeam && (
-            item.tag === myTeam ||
+            (Array.isArray(item.tag) ? item.tag.includes(myTeam) : item.tag === myTeam) ||
             (item.is_match_result && (item.home === myTeam || item.away === myTeam)) ||
             item.title.includes(myTeam) ||
             item.content.includes(myTeam)
@@ -1866,7 +1892,7 @@ function renderFollowingList(container) {
     // Filter news tagged with myTeam or containing myTeam in title/content
     const myTeamNews = state.newsData.filter(item => {
         // Tag check (from database JSON payload)
-        const hasTagMatch = item.tag === myTeam;
+        const hasTagMatch = Array.isArray(item.tag) ? item.tag.includes(myTeam) : item.tag === myTeam;
         
         // Match result team check
         const isMatchTeam = item.is_match_result && (item.home === myTeam || item.away === myTeam);
@@ -2402,6 +2428,46 @@ window.manageDeleteUser = async function(userId, nickname) {
     loadUserProfiles();
 };
 
+// 9.2 Initialize Multi-select Tag selectors
+function initTagSelectors() {
+    const newsContainer = document.getElementById('admin-news-tags-container');
+    const transferContainer = document.getElementById('transfer-tags-container');
+    
+    const eplTeams = [
+        "아스날", "맨시티", "맨유", "애스턴 빌라", "리버풀", "본머스", "선덜랜드", 
+        "브라이턴", "브렌트퍼드", "첼시", "풀럼", "뉴캐슬", "에버턴", "리즈 유나이티드", 
+        "크리스털 팰리스", "노팅엄 포레스트", "토트넘", "웨스트 햄", "번리", "울브스"
+    ];
+
+    state.selectedNewsTags = [];
+    state.selectedTransferTags = [];
+
+    const buildBadges = (container, selectedArray) => {
+        if (!container) return;
+        container.innerHTML = '';
+        eplTeams.forEach(team => {
+            const badge = document.createElement('button');
+            badge.type = 'button';
+            badge.className = "px-2.5 py-1 rounded-lg text-[10px] font-semibold border border-bordercolor text-mutedtext hover:text-white transition-all";
+            badge.textContent = team;
+            badge.onclick = () => {
+                const index = selectedArray.indexOf(team);
+                if (index === -1) {
+                    selectedArray.push(team);
+                    badge.className = "px-2.5 py-1 rounded-lg text-[10px] font-black border border-brand bg-brand text-black transition-all shadow-md shadow-brand/10";
+                } else {
+                    selectedArray.splice(index, 1);
+                    badge.className = "px-2.5 py-1 rounded-lg text-[10px] font-semibold border border-bordercolor text-mutedtext hover:text-white transition-all";
+                }
+            };
+            container.appendChild(badge);
+        });
+    };
+
+    buildBadges(newsContainer, state.selectedNewsTags);
+    buildBadges(transferContainer, state.selectedTransferTags);
+}
+
 // 10. App Entry Point
 document.addEventListener('DOMContentLoaded', () => {
     // Pre-seed offline admin profile if not exists
@@ -2423,6 +2489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupBottomSheet();
     setupAuthEvents();
     setupAdminPanelEvents();
+    initTagSelectors();
     
     // Initializing Supabase Auth & Session listener
     initAuth();

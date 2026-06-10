@@ -300,30 +300,10 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-mutedtext mb-1.5">관련 팀 태그 (선호팀 피드 연동)</label>
-                    <select id="admin-news-tag" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
-                        <option value="">선택 안함</option>
-                        <option value="아스날">아스날</option>
-                        <option value="맨시티">맨시티</option>
-                        <option value="맨유">맨유</option>
-                        <option value="애스턴 빌라">애스턴 빌라</option>
-                        <option value="리버풀">리버풀</option>
-                        <option value="본머스">본머스</option>
-                        <option value="선덜랜드">선덜랜드</option>
-                        <option value="브라이턴">브라이턴</option>
-                        <option value="브렌트퍼드">브렌트퍼드</option>
-                        <option value="첼시">첼시</option>
-                        <option value="풀럼">풀럼</option>
-                        <option value="뉴캐슬">뉴캐슬</option>
-                        <option value="에버턴">에버턴</option>
-                        <option value="리즈 유나이티드">리즈 유나이티드</option>
-                        <option value="크리스털 팰리스">크리스털 팰리스</option>
-                        <option value="노팅엄 포레스트">노팅엄 포레스트</option>
-                        <option value="토트넘">토트넘</option>
-                        <option value="웨스트 햄">웨스트 햄</option>
-                        <option value="번리">번리</option>
-                        <option value="울브스">울브스</option>
-                    </select>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">관련 팀 태그 (선호팀 피드 연동 - 복수 선택 가능)</label>
+                    <div id="admin-news-tags-container" class="flex flex-wrap gap-1.5 p-2.5 bg-darkbg border border-bordercolor rounded-xl max-h-32 overflow-y-auto">
+                        <!-- JS가 EPL 구단 태그 버튼들을 채웁니다 -->
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-mutedtext mb-1.5">기사 개요 / 대략적 사실 (AI 본문 작성 재료)</label>
@@ -402,30 +382,10 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-mutedtext mb-1.5">관련 팀 태그 (선호팀 피드 연동)</label>
-                    <select id="transfer-tag" class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-brand transition-colors">
-                        <option value="">선택 안함</option>
-                        <option value="아스날">아스날</option>
-                        <option value="맨시티">맨시티</option>
-                        <option value="맨유">맨유</option>
-                        <option value="애스턴 빌라">애스턴 빌라</option>
-                        <option value="리버풀">리버풀</option>
-                        <option value="본머스">본머스</option>
-                        <option value="선덜랜드">선덜랜드</option>
-                        <option value="브라이턴">브라이턴</option>
-                        <option value="브렌트퍼드">브렌트퍼드</option>
-                        <option value="첼시">첼시</option>
-                        <option value="풀럼">풀럼</option>
-                        <option value="뉴캐슬">뉴캐슬</option>
-                        <option value="에버턴">에버턴</option>
-                        <option value="리즈 유나이티드">리즈 유나이티드</option>
-                        <option value="크리스털 팰리스">크리스털 팰리스</option>
-                        <option value="노팅엄 포레스트">노팅엄 포레스트</option>
-                        <option value="토트넘">토트넘</option>
-                        <option value="웨스트 햄">웨스트 햄</option>
-                        <option value="번리">번리</option>
-                        <option value="울브스">울브스</option>
-                    </select>
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">관련 팀 태그 (선호팀 피드 연동 - 복수 선택 가능)</label>
+                    <div id="transfer-tags-container" class="flex flex-wrap gap-1.5 p-2.5 bg-darkbg border border-bordercolor rounded-xl max-h-32 overflow-y-auto">
+                        <!-- JS가 EPL 구단 태그 버튼들을 채웁니다 -->
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-mutedtext mb-1.5">상세 설명</label>
