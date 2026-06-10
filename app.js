@@ -621,24 +621,48 @@ function setupAuthEvents() {
                 btnUpdateFavTeam.disabled = true;
                 btnUpdateFavTeam.textContent = "저장 중...";
                 try {
-                    if (sbClient) {
+                    const isMockUser = state.user.id.startsWith('offline-') || state.user.id === 'admin-fixed-id';
+                    
+                    if (sbClient && !isMockUser) {
                         const { error } = await sbClient.auth.updateUser({
                             data: { fav_team: newFavTeam }
                         });
                         if (error) throw error;
                     }
-                    alert("🌟 선호팀이 성공적으로 변경되었습니다!");
                     
                     state.user.user_metadata = {
                         ...state.user.user_metadata,
                         fav_team: newFavTeam
                     };
                     
-                    // Offline fallback sync
-                    if (!sbClient) {
-                        localStorage.setItem('90plus_offline_user', JSON.stringify(state.user));
+                    // Save to local storage offline session memory
+                    localStorage.setItem('90plus_offline_user', JSON.stringify(state.user));
+
+                    // Update in the offline profile index
+                    const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
+                    const localUser = offlineUsers.find(u => u.id === state.user.id || u.nickname === state.user.user_metadata?.nickname);
+                    if (localUser) {
+                        localUser.fav_team = newFavTeam;
+                        localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
+                    }
+
+                    // Update Supabase profiles table directly
+                    if (sbClient) {
+                        try {
+                            const nickname = state.user.user_metadata?.nickname || '';
+                            const role = state.adminMode ? 'admin' : 'user';
+                            await sbClient.from('profiles').upsert({
+                                id: state.user.id,
+                                nickname,
+                                fav_team: newFavTeam,
+                                role
+                            });
+                        } catch (e) {
+                            console.warn("Profiles table upsert failed during team update:", e);
+                        }
                     }
                     
+                    alert("🌟 선호팀이 성공적으로 변경되었습니다!");
                     updateAuthUI();
                     renderMainContent();
                 } catch (err) {
