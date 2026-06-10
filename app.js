@@ -19,6 +19,17 @@ const state = {
     adminMode: false    // Admin authorization toggle
 };
 
+// 2.1. Offline Real-time Tab Synchronization
+const offlineSyncChannel = window.BroadcastChannel ? new BroadcastChannel('90plus_offline_sync') : null;
+if (offlineSyncChannel) {
+    offlineSyncChannel.onmessage = (event) => {
+        if (event.data && event.data.type === 'sync_news') {
+            console.log('Offline BroadcastChannel sync received!');
+            loadNews();
+        }
+    };
+}
+
 // 3. Official Club Logo Emblems (Guaranteed 100% Hotlink-Safe FotMob High-Res CDN Paths)
 const teamLogos = {
     "아스날": "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png",
@@ -48,68 +59,7 @@ const teamLogos = {
 };
 
 // 4. Premium Mock Data (Offline Fallbacks)
-const mockNews = [
-    {
-        id: 'mock-1',
-        created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-        is_here_we_go: true,
-        title: "빅토르 오시멘",
-        transfer_info: { from: "나폴리", to: "파리 생제르맹", cost: "€120M + 보너스" },
-        reporter: "Fabrizio Romano",
-        tier: 1,
-        category: "이적소식",
-        content: "빅토르 오시멘과 파리 생제르맹 간의 개인 조건 협상이 최종적으로 완료되었습니다. 계약 기간은 5년이며, 연봉은 세후 €12m으로 책정되었습니다. 나폴리와 PSG 간의 바이아웃 이적료 협상이 극적으로 타결되었으며 선수는 오늘 메디컬 테스트를 진행합니다."
-    },
-    {
-        id: 'mock-2',
-        created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        is_here_we_go: false,
-        title: "손흥민, 토트넘과 2027년까지 재계약 임박... 주급 상승 예상",
-        reporter: "The Athletic",
-        tier: 1,
-        category: "최신뉴스",
-        content: "토트넘 홋스퍼가 주장 손흥민과의 2027년 계약 연장을 위한 협상을 성공적으로 진행 중입니다. 새로운 계약에는 기존 대비 상당한 주급 인상이 포함될 예정이며, 포스테코글루 감독은 손흥민을 전술 및 정신적 핵심 리더로 평가해 재계약을 구단 수뇌부에 강력히 요청했습니다.",
-        summary_points: [
-            "토트넘 홋스퍼가 캡틴 손흥민과 2027년까지 계약 연장 협상 중.",
-            "새로운 계약에는 큰 폭의 주급 인상 및 프리미엄 대우 포함 전망.",
-            "포스테코글루 감독은 손흥민의 구단 내 영향력을 절대적으로 높게 평가함."
-        ]
-    },
-    {
-        id: 'mock-match-1',
-        created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        category: "경기결과",
-        is_match_result: true,
-        league: "프리미어리그",
-        round: "26-27시즌 1라운드",
-        home: "아스날",
-        away: "리버풀",
-        homeScore: 1,
-        awayScore: 1,
-        comment: "아스날: 부카요 사카 45' (PK) | 리버풀: 모하메드 살라 72' (도움: 다윈 누녜스). 개막전부터 격돌한 두 우승 후보의 불꽃튀는 난타전.",
-        reporter: "Fabrizio Romano",
-        tier: 1,
-        title: "아스날 1 : 1 리버풀",
-        content: "26-27시즌 프리미어리그 1라운드 경기결과 - 홈팀 아스날과 원정팀 리버풀의 치열한 공방전 끝에 1 대 1로 경기가 마무리되었습니다."
-    },
-    {
-        id: 'mock-match-2',
-        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        category: "경기결과",
-        is_match_result: true,
-        league: "챔피언스리그",
-        round: "25-26시즌 결승전",
-        home: "맨시티",
-        away: "레알",
-        homeScore: 3,
-        awayScore: 2,
-        comment: "맨시티: 홀란 12', 더 브라위너 55', 포든 89' | 레알: 비니시우스 33', 벨링엄 67'. 엘링 홀란의 선제골과 필 포든의 극장골로 맨체스터 시티가 빅이어를 들어올렸습니다.",
-        reporter: "Guillaume Balague",
-        tier: 1,
-        title: "맨시티 3 : 2 레알",
-        content: "챔피언스리그 결승전 경기결과 - 홈팀 맨체스터 시티와 원정팀 레알 마드리드의 치열한 공방전 끝에 3 대 2로 맨시티가 우승했습니다."
-    }
-];
+const mockNews = [];
 
 // EPL Real Standings (EPL Actual Standings Synchronized with user screenshot)
 const mockStandings = [
@@ -136,6 +86,15 @@ const mockStandings = [
 ];
 
 // 5. Utility Functions
+function nicknameToEmail(nickname) {
+    if (!nickname) return '';
+    const encoder = new TextEncoder();
+    const hex = Array.from(encoder.encode(nickname.trim()))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    return `${hex}@90plus.co`;
+}
+
 function getRelativeTime(dateString) {
     const diffMs = new Date() - new Date(dateString);
     const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -175,8 +134,10 @@ async function loadNews() {
         </div>
     `;
 
+    const offlineNews = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
     if (!sbClient) {
-        state.newsData = [...mockNews];
+        state.newsData = [...mockNews, ...offlineNews];
+        state.newsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         renderTopNav();
         renderMainContent();
         return;
@@ -253,8 +214,8 @@ async function loadNews() {
             };
         });
 
-        // Merge Mock + DB news, remove duplicates based on content prefix
-        const mergedNews = [...mockNews, ...parsedDbNews];
+        // Merge Mock + DB news + Offline news, remove duplicates based on content prefix
+        const mergedNews = [...mockNews, ...offlineNews, ...parsedDbNews];
         const uniqueMap = new Map();
         mergedNews.forEach(item => {
             const key = item.content.substring(0, 30);
@@ -268,7 +229,8 @@ async function loadNews() {
 
     } catch (err) {
         console.error("DB Load failed, fallback to offline mocks:", err);
-        state.newsData = [...mockNews]; 
+        state.newsData = [...mockNews, ...offlineNews]; 
+        state.newsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } finally {
         renderTopNav();
         renderMainContent();
@@ -281,6 +243,16 @@ async function loadNews() {
 // 7. Supabase Auth Module Integration
 async function initAuth() {
     if (!sbClient) {
+        const offlineUser = localStorage.getItem('90plus_offline_user');
+        if (offlineUser) {
+            try {
+                state.user = JSON.parse(offlineUser);
+                state.adminMode = state.user ? (
+                    state.user.user_metadata?.nickname === 'admin' ||
+                    state.user.user_metadata?.role === 'admin'
+                ) : false;
+            } catch (e) {}
+        }
         updateAuthUI(); // Call updateAuthUI even if sbClient is null to render Guest profile button correctly!
         return;
     }
@@ -289,10 +261,10 @@ async function initAuth() {
     sbClient.auth.onAuthStateChange((event, session) => {
         state.user = session?.user || null;
         
-        // Define admin accounts (admin@admin.com, @90plus.co emails, or explicit metadata claim)
+        // Define admin accounts (admin nickname, virtual admin email, or explicit metadata claim)
         state.adminMode = state.user ? (
-            state.user.email.endsWith('@90plus.co') || 
-            state.user.email === 'admin@admin.com' ||
+            state.user.user_metadata?.nickname === 'admin' || 
+            state.user.email === nicknameToEmail('admin') ||
             state.user.user_metadata?.role === 'admin'
         ) : false;
         
@@ -305,8 +277,8 @@ async function initAuth() {
         const { data: { session } } = await sbClient.auth.getSession();
         state.user = session?.user || null;
         state.adminMode = state.user ? (
-            state.user.email.endsWith('@90plus.co') || 
-            state.user.email === 'admin@admin.com' ||
+            state.user.user_metadata?.nickname === 'admin' || 
+            state.user.email === nicknameToEmail('admin') ||
             state.user.user_metadata?.role === 'admin'
         ) : false;
     } catch (e) {
@@ -362,10 +334,10 @@ function updateAuthUI() {
         if (formSignup) formSignup.classList.add('hidden');
         if (authTabContainer) authTabContainer.classList.add('hidden');
 
-        const nickname = state.user.user_metadata?.nickname || state.user.user_metadata?.name || state.user.email.split('@')[0];
+        const nickname = state.user.user_metadata?.nickname || state.user.user_metadata?.name || "사용자";
         const favTeamText = userFavTeam ? ` (${userFavTeam} 팬)` : '';
         if (displayName) displayName.textContent = `${nickname}님${favTeamText}`;
-        if (displayEmail) displayEmail.textContent = state.user.email;
+        if (displayEmail) displayEmail.textContent = `@${nickname}`;
 
         // Auto-select current favorite team in profile panel dropdown
         const profileFavTeamSelect = document.getElementById('user-profile-fav-team');
@@ -462,11 +434,33 @@ function setupAuthEvents() {
     if (tabSignup) tabSignup.addEventListener('click', () => switchAuthTab('signup'));
 
     // Authenticated Forms Submission
-    if (formLogin && sbClient) {
+    if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
+            const nickname = document.getElementById('login-nickname').value.trim();
             const password = document.getElementById('login-password').value;
+            const email = nicknameToEmail(nickname);
+
+            if (!sbClient) {
+                // Offline fallback login
+                const offlineUser = localStorage.getItem('90plus_offline_user');
+                if (offlineUser) {
+                    try {
+                        const parsed = JSON.parse(offlineUser);
+                        if (parsed.user_metadata?.nickname.toLowerCase() === nickname.toLowerCase() && password.length >= 6) {
+                            state.user = parsed;
+                            state.adminMode = nickname.toLowerCase() === 'admin';
+                            updateAuthUI();
+                            alert("🔓 [오프라인 모드] 로그인 성공!");
+                            authBackdrop.classList.remove('open');
+                            loadNews();
+                            return;
+                        }
+                    } catch(e) {}
+                }
+                alert("❌ [오프라인 모드] 로그인 실패: 일치하는 가입 정보가 없거나 패스워드가 잘못되었습니다.");
+                return;
+            }
 
             try {
                 const { error } = await sbClient.auth.signInWithPassword({ email, password });
@@ -479,13 +473,28 @@ function setupAuthEvents() {
         });
     }
 
-    if (formSignup && sbClient) {
+    if (formSignup) {
         formSignup.addEventListener('submit', async (e) => {
             e.preventDefault();
             const nickname = document.getElementById('signup-name').value.trim();
             const favTeam = document.getElementById('signup-fav-team').value;
-            const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
+            const email = nicknameToEmail(nickname);
+
+            if (!sbClient) {
+                // Offline fallback signup
+                const mockUser = {
+                    id: 'offline-' + Date.now(),
+                    email: email,
+                    user_metadata: { nickname, fav_team: favTeam }
+                };
+                localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
+                alert("✉️ [오프라인 모드] 가입 성공! 즉시 로그인해 보세요.");
+                switchAuthTab('login');
+                const loginNickInput = document.getElementById('login-nickname');
+                if (loginNickInput) loginNickInput.value = nickname;
+                return;
+            }
 
             try {
                 const { error } = await sbClient.auth.signUp({
@@ -498,14 +507,25 @@ function setupAuthEvents() {
                 if (error) throw error;
                 alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
                 switchAuthTab('login');
+                const loginNickInput = document.getElementById('login-nickname');
+                if (loginNickInput) loginNickInput.value = nickname;
             } catch (err) {
                 alert(`❌ 회원가입 실패: ${err.message}`);
             }
         });
     }
 
-    if (btnLogout && sbClient) {
+    if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
+            if (!sbClient) {
+                state.user = null;
+                state.adminMode = false;
+                updateAuthUI();
+                alert("🔒 [오프라인 모드] 로그아웃 되었습니다.");
+                authBackdrop.classList.remove('open');
+                loadNews();
+                return;
+            }
             try {
                 const { error } = await sbClient.auth.signOut();
                 if (error) throw error;
@@ -595,7 +615,7 @@ async function generateAiArticle(apiKey, title, outline) {
 2. 어조는 스포츠 매거진 전문 기자의 신뢰감 넘치는 톤앤매너로 하고 문장력이 뛰어나야 합니다.
 3. 분량은 본문 기준으로 350~500자 정도로 문단을 깔끔하게 구분하여 기사 형태로 작성할 것.
 4. 기사의 핵심 사실을 요약한 3가지 핵심 요약 포인트(Summary Points)를 반드시 유려한 문장으로 도출할 것.
-5. 출력 형식은 반드시 JSON 형태여야 하며, 추가적인 설명 텍스트나 마크다운 기호(예: \`\`\`json) 없이 순수한 JSON만 반환해야 합니다.
+5. 출력 형식은 반드시 JSON 형태여야 합니다.
 
 반환할 JSON 구조 형식:
 {
@@ -617,13 +637,28 @@ async function generateAiArticle(apiKey, title, outline) {
         contents: [
             {
                 parts: [
-                    { text: systemPrompt },
                     { text: userMessage }
                 ]
             }
         ],
+        systemInstruction: {
+            parts: [
+                { text: systemPrompt }
+            ]
+        },
         generationConfig: {
-            responseMimeType: "application/json"
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "OBJECT",
+                properties: {
+                    content: { type: "STRING" },
+                    summary: {
+                        type: "ARRAY",
+                        items: { type: "STRING" }
+                    }
+                },
+                required: ["content", "summary"]
+            }
         }
     };
 
@@ -646,21 +681,9 @@ async function generateAiArticle(apiKey, title, outline) {
     }
 
     try {
-        const parsed = JSON.parse(responseText);
-        if (!parsed.content || !Array.isArray(parsed.summary)) {
-            throw new Error("Gemini 응답 JSON 필드 규격이 불일치합니다.");
-        }
-        return parsed;
+        return JSON.parse(responseText.trim());
     } catch (e) {
-        console.warn("JSON 파싱 에러, 수동 대체 파싱 시도", e);
-        return {
-            content: responseText.replace(/[\{\}]/g, '').trim(),
-            summary: [
-                `${title} 경기 관련 긴급 분석 리포트`,
-                `새로운 팀 전술 흐름이 포착되었습니다.`,
-                `상세 본문을 토대로 90plus에서 실시간 업데이트 예정.`
-            ]
-        };
+        throw new Error("Gemini 응답 JSON 파싱 실패: " + e.message);
     }
 }
 
@@ -677,7 +700,7 @@ EPL 구단명은 반드시 다음 20개 이름 중 하나로 정확하게 매핑
 "아스날", "맨시티", "맨유", "애스턴 빌라", "리버풀", "본머스", "선덜랜드", "브라이턴", "브렌트퍼드", "첼시", "풀럼", "뉴캐슬", "에버턴", "리즈 유나이티드", "크리스털 팰리스", "노팅엄 포레스트", "토트넘", "웨스트 햄", "번리", "울브스"
 
 [출력 JSON 구조 규격]
-출력은 마크다운 기호(\`\`\`json) 등 부가 설명 없이 오직 순수한 아래 구조의 JSON 객체 하나여야 합니다:
+반드시 아래 JSON 구조로만 답변해야 합니다. 마크다운 백틱(\`\`\`json ... \`\`\`)을 포함하여 작성해 주세요.
 {
     "league": "프리미어리그" | "챔피언스리그" | "유로파리그" | "FA컵" 중 하나 (가장 어울리는 대회 선택),
     "round": "예시: 26-27시즌 1라운드",
@@ -699,10 +722,8 @@ EPL 구단명은 반드시 다음 20개 이름 중 하나로 정확하게 매핑
             systemInstruction: {
                 parts: [{ text: systemPrompt }]
             },
-            tools: [{ google_search: {} }], // Google Search Grounding Enabled!
-            generationConfig: {
-                responseMimeType: "application/json"
-            }
+            tools: [{ google_search: {} }] // Google Search Grounding Enabled!
+            // Note: responseMimeType is omitted to prevent conflict with tools (HTTP 400)
         })
     });
 
@@ -717,9 +738,13 @@ EPL 구단명은 반드시 다음 20개 이름 중 하나로 정확하게 매핑
     }
 
     try {
-        return JSON.parse(responseText.trim());
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error("응답에서 JSON 데이터를 추출할 수 없습니다.");
+        }
+        return JSON.parse(jsonMatch[0].trim());
     } catch (e) {
-        throw new Error("Gemini 응답 JSON 파싱 실패: " + e.message);
+        throw new Error("Gemini 응답 JSON 파싱 실패: " + e.message + "\n\n원문: " + responseText);
     }
 }
 
@@ -737,7 +762,17 @@ async function deleteArticle(id, event) {
             localStorage.setItem('90plus_deleted', JSON.stringify(state.deletedIds));
         }
 
-        if (stringId.startsWith('mock-')) {
+        if (stringId.startsWith('offline-')) {
+            // Local offline news/transfer/match deletion
+            let currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+            currentOffline = currentOffline.filter(n => String(n.id) !== stringId);
+            localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+            alert("🗑️ 오프라인 기사가 성공적으로 삭제되었습니다.");
+            
+            if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+            loadNews();
+            return;
+        } else if (stringId.startsWith('mock-')) {
             // Local Mock News deletion
             const idx = mockNews.findIndex(n => n.id === id);
             if (idx !== -1) mockNews.splice(idx, 1);
@@ -866,7 +901,15 @@ function setupAdminPanelEvents() {
                     btnSubmitNews.className = "flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]";
                 }
             } catch (err) {
-                alert(`❌ AI 본문 작성 중 에러 발생: ${err.message}`);
+                alert(`❌ AI 본문 작성 중 에러 발생: ${err.message}\n\n⚠️ Gemini API 한도 초과 또는 오류가 발생했습니다. 직접 기사를 작성할 수 있도록 입력창과 발행 버튼을 활성화합니다.`);
+                
+                const previewContainer = document.getElementById('ai-preview-container');
+                const btnSubmitNews = document.getElementById('btn-submit-news');
+                if (previewContainer && btnSubmitNews) {
+                    previewContainer.classList.remove('hidden');
+                    btnSubmitNews.disabled = false;
+                    btnSubmitNews.className = "flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]";
+                }
             } finally {
                 btnGenerateAi.disabled = false;
                 btnGenerateAi.textContent = "🪄 AI 본문 초안 생성 (Gemini)";
@@ -875,7 +918,24 @@ function setupAdminPanelEvents() {
         });
     }
 
-    if (formAdminNews && sbClient) {
+    const btnManualWrite = document.getElementById('btn-manual-write-news');
+    if (btnManualWrite) {
+        btnManualWrite.addEventListener('click', () => {
+            const previewContainer = document.getElementById('ai-preview-container');
+            const btnSubmitNews = document.getElementById('btn-submit-news');
+            const contentInput = document.getElementById('admin-news-content');
+            const summaryInput = document.getElementById('admin-news-summary');
+            if (previewContainer && btnSubmitNews) {
+                if (contentInput) contentInput.value = '';
+                if (summaryInput) summaryInput.value = '';
+                previewContainer.classList.remove('hidden');
+                btnSubmitNews.disabled = false;
+                btnSubmitNews.className = "flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 active:scale-[0.98]";
+            }
+        });
+    }
+
+    if (formAdminNews) {
         formAdminNews.addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('admin-news-title').value.trim();
@@ -899,6 +959,43 @@ function setupAdminPanelEvents() {
             };
 
             const jsonString = JSON.stringify(richPayload);
+
+            if (!sbClient) {
+                // Offline fallback insertion
+                const newArticle = {
+                    id: 'offline-news-' + Date.now(),
+                    created_at: new Date().toISOString(),
+                    title: title,
+                    content: content,
+                    reporter: nickname,
+                    tier: 1,
+                    category: category,
+                    is_here_we_go: false,
+                    summary_points: summary,
+                    tag: tag
+                };
+                const currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+                currentOffline.unshift(newArticle);
+                localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+                
+                alert("🏆 [오프라인 모드] 뉴스가 로컬 브라우저에 임시 발행되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminNews.reset();
+                const newsTagSelect = document.getElementById('admin-news-tag');
+                if (newsTagSelect) newsTagSelect.value = '';
+                const previewContainer = document.getElementById('ai-preview-container');
+                if (previewContainer) previewContainer.classList.add('hidden');
+                
+                const btnSubmitNews = document.getElementById('btn-submit-news');
+                if (btnSubmitNews) {
+                    btnSubmitNews.disabled = true;
+                    btnSubmitNews.className = "flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 opacity-50 cursor-not-allowed";
+                }
+                
+                if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+                loadNews();
+                return;
+            }
 
             try {
                 const { error } = await sbClient
@@ -935,7 +1032,7 @@ function setupAdminPanelEvents() {
         });
     }
 
-    if (formAdminTransfer && sbClient) {
+    if (formAdminTransfer) {
         formAdminTransfer.addEventListener('submit', async (e) => {
             e.preventDefault();
             const player = document.getElementById('transfer-player').value.trim();
@@ -965,6 +1062,39 @@ function setupAdminPanelEvents() {
 
             const jsonString = JSON.stringify(transferPayload);
 
+            if (!sbClient) {
+                // Offline fallback insertion
+                const newTransfer = {
+                    id: 'offline-transfer-' + Date.now(),
+                    created_at: new Date().toISOString(),
+                    title: player,
+                    content: desc,
+                    reporter: reporter,
+                    tier: tier,
+                    category: "이적소식",
+                    is_here_we_go: true,
+                    transfer_info: {
+                        from: fromTeam,
+                        to: toTeam,
+                        cost: cost
+                    },
+                    tag: tag
+                };
+                const currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+                currentOffline.unshift(newTransfer);
+                localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+
+                alert("🚨 [오프라인 모드] 이적 정보가 로컬 브라우저에 임시 발행되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminTransfer.reset();
+                const transTagSelect = document.getElementById('transfer-tag');
+                if (transTagSelect) transTagSelect.value = '';
+                
+                if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+                loadNews();
+                return;
+            }
+
             try {
                 const { error } = await sbClient
                     .from('football_news')
@@ -990,7 +1120,7 @@ function setupAdminPanelEvents() {
     }
 
     // Form 3: Match Result Submit Handler
-    if (formAdminMatchResult && sbClient) {
+    if (formAdminMatchResult) {
         formAdminMatchResult.addEventListener('submit', async (e) => {
             e.preventDefault();
             const league = document.getElementById('match-league').value;
@@ -1019,6 +1149,38 @@ function setupAdminPanelEvents() {
             };
 
             const jsonString = JSON.stringify(matchResultPayload);
+
+            if (!sbClient) {
+                // Offline fallback insertion
+                const newMatch = {
+                    id: 'offline-match-' + Date.now(),
+                    created_at: new Date().toISOString(),
+                    title: `${home} ${homeScore} : ${awayScore} ${away}`,
+                    content: `${league} ${round} 경기 결과 - 홈팀 ${home}와 원정팀 ${away}의 치열한 공방전 끝에 ${homeScore} 대 ${awayScore}로 경기가 마무리되었습니다. ${comment ? `득점 기록: ${comment}` : ''}`,
+                    reporter: nickname,
+                    tier: 1,
+                    category: "경기결과",
+                    is_match_result: true,
+                    league,
+                    round,
+                    home,
+                    away,
+                    homeScore,
+                    awayScore,
+                    comment
+                };
+                const currentOffline = JSON.parse(localStorage.getItem('90plus_offline_news') || '[]');
+                currentOffline.unshift(newMatch);
+                localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
+
+                alert("⚽ [오프라인 모드] 경기 결과가 로컬 브라우저에 임시 발행되었습니다!");
+                document.getElementById('admin-backdrop').classList.remove('open');
+                formAdminMatchResult.reset();
+                
+                if (offlineSyncChannel) offlineSyncChannel.postMessage({ type: 'sync_news' });
+                loadNews();
+                return;
+            }
 
             try {
                 const { error } = await sbClient
@@ -1843,6 +2005,28 @@ function openBottomSheet(item) {
     backdrop.classList.add('open');
 }
 
+// 9. Supabase Realtime Synchronization Module
+function setupRealtimeSync() {
+    if (!sbClient) return;
+    
+    // Subscribe to Postgres changes on 'football_news' table
+    sbClient
+        .channel('public:football_news')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'football_news'
+            },
+            (payload) => {
+                console.log('Realtime database change detected:', payload);
+                loadNews();
+            }
+        )
+        .subscribe();
+}
+
 // 10. App Entry Point
 document.addEventListener('DOMContentLoaded', () => {
     // Initializing SPA Routers & Event Listeners
@@ -1854,6 +2038,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initializing Supabase Auth & Session listener
     initAuth();
+
+    // Setup Realtime Sync
+    setupRealtimeSync();
     
     // Fetch news from Supabase database
     loadNews();

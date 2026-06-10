@@ -144,8 +144,8 @@
             <!-- Login Form -->
             <form id="form-login" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-mutedtext mb-1.5">이메일 주소</label>
-                    <input type="email" id="login-email" placeholder="example@email.com" required
+                    <label class="block text-xs font-bold text-mutedtext mb-1.5">닉네임</label>
+                    <input type="text" id="login-nickname" placeholder="닉네임 입력" required
                            class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
                 </div>
                 <div>
@@ -188,11 +188,6 @@
                         <option value="번리">번리</option>
                         <option value="울브스">울브스</option>
                     </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-mutedtext mb-1.5">이메일 주소</label>
-                    <input type="email" id="signup-email" placeholder="example@email.com" required
-                           class="w-full bg-darkbg text-white border border-bordercolor rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand transition-colors">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-mutedtext mb-1.5">비밀번호</label>
@@ -352,6 +347,9 @@
                 <div class="flex gap-3 pt-2">
                     <button type="button" id="btn-generate-ai-text" class="flex-1 bg-teal-500 text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-teal-500/20 active:scale-[0.98]">
                         🪄 AI 본문 초안 생성 (Gemini)
+                    </button>
+                    <button type="button" id="btn-manual-write-news" class="flex-1 bg-cardhover text-white border border-bordercolor font-extrabold py-3.5 rounded-xl text-sm transition-all hover:border-brand/40 active:scale-[0.98]">
+                        ✍️ 직접 기사 작성
                     </button>
                     <button type="submit" id="btn-submit-news" class="flex-1 bg-brand text-black font-extrabold py-3.5 rounded-xl text-sm transition-all hover:shadow-lg hover:shadow-brand/20 opacity-50 cursor-not-allowed" disabled>
                         기사 발행 및 등록
