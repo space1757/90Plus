@@ -43,12 +43,12 @@ function showToast(message, type = 'info', duration = 3500) {
 
     container.appendChild(toast);
 
-    // Auto-destroy after duration
+    // Auto-destroy after duration using safe double-setTimeout
     setTimeout(() => {
         toast.classList.add('toast-fade-out');
-        toast.addEventListener('transitionend', () => {
+        setTimeout(() => {
             toast.remove();
-        });
+        }, 300);
     }, duration);
 }
 
@@ -542,7 +542,12 @@ function setupAuthEvents() {
                                         data: { nickname: 'adminofficial', role: 'admin', fav_team: '' }
                                     }
                                 });
-                                if (signUpRes.error) throw signUpRes.error;
+                                if (signUpRes.error) {
+                                    if (signUpRes.error.message.toLowerCase().includes("already registered") || signUpRes.error.status === 422) {
+                                        throw new Error("Supabase Auth에 adminofficial 계정이 이미 존재하지만 비밀번호가 일치하지 않습니다. 올바른 비밀번호를 입력하거나 DB에서 해당 계정을 삭제 후 다시 시도해 주세요.");
+                                    }
+                                    throw signUpRes.error;
+                                }
                                 
                                 // Retry sign in
                                 const retryRes = await sbClient.auth.signInWithPassword({ email, password });
