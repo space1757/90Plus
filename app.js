@@ -824,11 +824,14 @@ async function generateAiArticle(apiKey, title, outline) {
         }
     };
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody)
-    });
+    const response = await withTimeout(
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        }),
+        10000
+    );
 
     if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -874,20 +877,23 @@ EPL 구단명은 반드시 다음 20개 이름 중 하나로 정확하게 매핑
 }
 `;
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: `검색어: "${query}"\n\n위 검색어에 부합하는 경기를 구글 검색을 통해 실시간 탐색하여, 가장 신뢰성 높은 최신 경기결과 정보로 JSON을 생성해줘.` }]
-            }],
-            systemInstruction: {
-                parts: [{ text: systemPrompt }]
-            },
-            tools: [{ google_search: {} }] // Google Search Grounding Enabled!
-            // Note: responseMimeType is omitted to prevent conflict with tools (HTTP 400)
-        })
-    });
+    const response = await withTimeout(
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: `검색어: "${query}"\n\n위 검색어에 부합하는 경기를 구글 검색을 통해 실시간 탐색하여, 가장 신뢰성 높은 최신 경기결과 정보로 JSON을 생성해줘.` }]
+                }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                tools: [{ google_search: {} }] // Google Search Grounding Enabled!
+                // Note: responseMimeType is omitted to prevent conflict with tools (HTTP 400)
+            })
+        }),
+        10000
+    );
 
     if (!response.ok) {
         throw new Error(`Gemini API 통신 장애: HTTP ${response.status}`);
@@ -1055,7 +1061,14 @@ function setupAdminPanelEvents() {
         btnGenerateAi.addEventListener('click', async () => {
             const title = document.getElementById('admin-news-title').value.trim();
             const outline = document.getElementById('admin-news-outline').value.trim();
-            const apiKey = localStorage.getItem('90plus_gemini_key') || '';
+            
+            const keyInputEl = document.getElementById('gemini-api-key');
+            let apiKey = keyInputEl ? keyInputEl.value.trim() : '';
+            if (apiKey) {
+                localStorage.setItem('90plus_gemini_key', apiKey);
+            } else {
+                apiKey = localStorage.getItem('90plus_gemini_key') || '';
+            }
 
             if (!apiKey) {
                 alert("🔑 AI 작성을 진행하려면 먼저 Gemini API Key를 입력하고 저장해 주세요!");
@@ -1482,7 +1495,14 @@ function setupAdminPanelEvents() {
     if (btnAiExtractMatch) {
         btnAiExtractMatch.addEventListener('click', async () => {
             const query = document.getElementById('ai-match-query').value.trim();
-            const apiKey = localStorage.getItem('90plus_gemini_key') || '';
+            
+            const keyInputEl = document.getElementById('gemini-api-key');
+            let apiKey = keyInputEl ? keyInputEl.value.trim() : '';
+            if (apiKey) {
+                localStorage.setItem('90plus_gemini_key', apiKey);
+            } else {
+                apiKey = localStorage.getItem('90plus_gemini_key') || '';
+            }
 
             if (!apiKey) {
                 alert("🔑 AI 자동 추출을 사용하려면 먼저 관리자 콘솔 상단에 Gemini API Key를 입력하고 저장해 주세요!");
