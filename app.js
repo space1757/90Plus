@@ -162,10 +162,11 @@ async function registerProfile(id, nickname, favTeam) {
     localStorage.setItem('90plus_offline_users', JSON.stringify(localUsers));
 
     if (sbClient) {
-        const { error } = await sbClient.from('profiles').upsert(profile);
-        if (error) {
-            console.warn("Supabase profiles table upsert failed:", error);
-            throw new Error(`실시간 데이터베이스 프로필 등록 실패 (사유: ${error.message})`);
+        try {
+            const { error } = await sbClient.from('profiles').upsert(profile);
+            if (error) console.warn("Supabase profiles table upsert failed:", error);
+        } catch(e) {
+            console.warn("Supabase profiles table upsert failed:", e);
         }
     }
 }
@@ -577,50 +578,16 @@ function setupAuthEvents() {
                             return;
                         }
                     } catch (authErr) {
-                        console.warn("Supabase Admin Auth login failed, falling back to offline mock:", authErr);
-                        // Fall back to offline flow below
+                        console.warn("Supabase Admin Auth login failed:", authErr);
+                        alert(`❌ 관리자 로그인 실패: ${authErr.message || authErr}`);
+                        return;
                     }
                 }
-
-                const adminUser = {
-                    id: 'admin-fixed-id',
-                    email: email,
-                    user_metadata: { nickname: 'adminofficial', role: 'admin', fav_team: '' }
-                };
-                localStorage.setItem('90plus_offline_user', JSON.stringify(adminUser));
-                
-                await registerProfile('admin-fixed-id', 'adminofficial', '');
-
-                state.user = adminUser;
-                state.adminMode = true;
-                updateAuthUI();
-                alert("🔓 관리자 계정 로그인 성공! (오프라인 모드)");
-                authBackdrop.classList.remove('open');
-                loadNews();
                 return;
             }
 
             if (!sbClient) {
-                // Offline fallback login matching local list
-                const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
-                const foundUser = offlineUsers.find(u => u.nickname.toLowerCase() === nickname.toLowerCase());
-
-                if (foundUser && password.length >= 6) {
-                    const mockUser = {
-                        id: foundUser.id,
-                        email: email,
-                        user_metadata: { nickname: foundUser.nickname, fav_team: foundUser.fav_team, role: foundUser.role }
-                    };
-                    localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
-                    state.user = mockUser;
-                    state.adminMode = foundUser.role === 'admin';
-                    updateAuthUI();
-                    alert("🔓 [오프라인 모드] 로그인 성공!");
-                    authBackdrop.classList.remove('open');
-                    loadNews();
-                    return;
-                }
-                alert("❌ [오프라인 모드] 로그인 실패: 일치하는 가입 정보가 없거나 패스워드가 잘못되었습니다 (비밀번호 6자 이상 필요).");
+                alert("❌ [서버 오프라인] 실시간 서버 연결이 끊겨 로그인할 수 없습니다.");
                 return;
             }
 
@@ -628,43 +595,16 @@ function setupAuthEvents() {
                 const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 
-                let profileSyncError = null;
                 if (data && data.user) {
                     const nick = data.user.user_metadata?.nickname || nickname;
                     const fav = data.user.user_metadata?.fav_team || '';
-                    try {
-                        await registerProfile(data.user.id, nick, fav);
-                    } catch(profileErr) {
-                        profileSyncError = profileErr.message;
-                    }
+                    await registerProfile(data.user.id, nick, fav);
                 }
 
-                if (profileSyncError) {
-                    alert(`🔓 로그인 성공! 환영합니다.\n\n⚠️ 단, 프로필 데이터를 서버와 실시간 동기화하지 못했습니다.\n(사유: ${profileSyncError})\n일부 관리/알림 연동 기능이 제한될 수 있습니다.`);
-                } else {
-                    alert("🔓 로그인 성공! 환영합니다.");
-                }
+                alert("🔓 로그인 성공! 환영합니다.");
                 authBackdrop.classList.remove('open');
             } catch (err) {
-                // Automatic fallback to offline login on connection/server failure
-                const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
-                const foundUser = offlineUsers.find(u => u.nickname.toLowerCase() === nickname.toLowerCase());
-
-                if (foundUser && password.length >= 6) {
-                    const mockUser = {
-                        id: foundUser.id,
-                        email: email,
-                        user_metadata: { nickname: foundUser.nickname, fav_team: foundUser.fav_team, role: foundUser.role }
-                    };
-                    localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
-                    state.user = mockUser;
-                    state.adminMode = foundUser.role === 'admin';
-                    updateAuthUI();
-                    alert(`⚠️ [서버 연결 실패] 오프라인 모드로 로그인되었습니다.\n(계정: ${foundUser.nickname})`);
-                    authBackdrop.classList.remove('open');
-                    loadNews();
-                    return;
-                }
+                console.warn("Supabase login failed:", err);
                 alert(`❌ 로그인 실패: ${err.message}`);
             }
         });
@@ -678,27 +618,8 @@ function setupAuthEvents() {
             const password = document.getElementById('signup-password').value;
             const email = nicknameToEmail(nickname);
 
-            if (nickname.toLowerCase() === 'adminofficial') {
-                alert("❌ 'adminofficial'은 예약된 관리자 닉네임이므로 새로 가입할 수 없습니다.");
-                return;
-            }
-
             if (!sbClient) {
-                // Offline fallback signup
-                const newUserId = 'offline-' + Date.now();
-                const mockUser = {
-                    id: newUserId,
-                    email: email,
-                    user_metadata: { nickname, fav_team: favTeam, role: 'user' }
-                };
-                
-                await registerProfile(newUserId, nickname, favTeam);
-                localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
-                
-                alert("✉️ [오프라인 모드] 가입 성공! 즉시 로그인해 보세요.");
-                switchAuthTab('login');
-                const loginNickInput = document.getElementById('login-nickname');
-                if (loginNickInput) loginNickInput.value = nickname;
+                alert("❌ [서버 오프라인] 실시간 서버 연결이 끊겨 회원가입을 진행할 수 없습니다.");
                 return;
             }
 
@@ -712,39 +633,17 @@ function setupAuthEvents() {
                 });
                 if (error) throw error;
                 
-                let profileSyncError = null;
                 if (data && data.user) {
-                    try {
-                        await registerProfile(data.user.id, nickname, favTeam);
-                    } catch(profileErr) {
-                        profileSyncError = profileErr.message;
-                    }
+                    await registerProfile(data.user.id, nickname, favTeam);
                 }
 
-                if (profileSyncError) {
-                    alert(`✉️ 회원가입이 완료되었습니다!\n\n⚠️ 단, 프로필 데이터를 서버와 실시간 동기화하지 못했습니다.\n(사유: ${profileSyncError})\n현재 오프라인 로컬 프로필로 가입되었습니다.`);
-                } else {
-                    alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
-                }
+                alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
                 switchAuthTab('login');
                 const loginNickInput = document.getElementById('login-nickname');
                 if (loginNickInput) loginNickInput.value = nickname;
             } catch (err) {
-                // Automatic fallback to offline signup on connection/server failure
-                const newUserId = 'offline-' + Date.now();
-                const mockUser = {
-                    id: newUserId,
-                    email: email,
-                    user_metadata: { nickname, fav_team: favTeam, role: 'user' }
-                };
-                
-                await registerProfile(newUserId, nickname, favTeam);
-                localStorage.setItem('90plus_offline_user', JSON.stringify(mockUser));
-                
-                alert(`⚠️ [서버 연결 실패] 오프라인 모드로 회원가입이 완료되었습니다!\n(가입된 닉네임: ${nickname})`);
-                switchAuthTab('login');
-                const loginNickInput = document.getElementById('login-nickname');
-                if (loginNickInput) loginNickInput.value = nickname;
+                console.warn("Supabase signup failed:", err);
+                alert(`❌ 회원가입 실패: ${err.message}`);
             }
         });
     }
