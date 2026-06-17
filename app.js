@@ -110,10 +110,10 @@ async function registerProfile(id, nickname, favTeam) {
     localStorage.setItem('90plus_offline_users', JSON.stringify(localUsers));
 
     if (sbClient) {
-        try {
-            await sbClient.from('profiles').upsert(profile);
-        } catch(e) {
-            console.warn("Supabase profiles table upsert failed (it may not exist):", e);
+        const { error } = await sbClient.from('profiles').upsert(profile);
+        if (error) {
+            console.warn("Supabase profiles table upsert failed:", error);
+            throw new Error(`실시간 데이터베이스 프로필 등록 실패 (사유: ${error.message})`);
         }
     }
 }
@@ -506,9 +506,20 @@ function setupAuthEvents() {
                             state.user = authData.user;
                             state.adminMode = true;
                             localStorage.setItem('90plus_offline_user', JSON.stringify(authData.user));
-                            await registerProfile(authData.user.id, 'adminofficial', '');
+                            
+                            let profileSyncError = null;
+                            try {
+                                await registerProfile(authData.user.id, 'adminofficial', '');
+                            } catch(profileErr) {
+                                profileSyncError = profileErr.message;
+                            }
+
                             updateAuthUI();
-                            alert("🔓 [온라인] 관리자 계정 로그인 성공! 실시간 데이터베이스에 즉시 반영됩니다.");
+                            if (profileSyncError) {
+                                alert(`🔓 [온라인] 관리자 계정 로그인 성공!\n\n⚠️ 단, 프로필 데이터를 서버와 실시간 동기화하지 못했습니다.\n(사유: ${profileSyncError})`);
+                            } else {
+                                alert("🔓 [온라인] 관리자 계정 로그인 성공! 실시간 데이터베이스에 즉시 반영됩니다.");
+                            }
                             authBackdrop.classList.remove('open');
                             loadNews();
                             return;
@@ -565,13 +576,22 @@ function setupAuthEvents() {
                 const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
                 
+                let profileSyncError = null;
                 if (data && data.user) {
                     const nick = data.user.user_metadata?.nickname || nickname;
                     const fav = data.user.user_metadata?.fav_team || '';
-                    await registerProfile(data.user.id, nick, fav);
+                    try {
+                        await registerProfile(data.user.id, nick, fav);
+                    } catch(profileErr) {
+                        profileSyncError = profileErr.message;
+                    }
                 }
 
-                alert("🔓 로그인 성공! 환영합니다.");
+                if (profileSyncError) {
+                    alert(`🔓 로그인 성공! 환영합니다.\n\n⚠️ 단, 프로필 데이터를 서버와 실시간 동기화하지 못했습니다.\n(사유: ${profileSyncError})\n일부 관리/알림 연동 기능이 제한될 수 있습니다.`);
+                } else {
+                    alert("🔓 로그인 성공! 환영합니다.");
+                }
                 authBackdrop.classList.remove('open');
             } catch (err) {
                 // Automatic fallback to offline login on connection/server failure
@@ -640,11 +660,20 @@ function setupAuthEvents() {
                 });
                 if (error) throw error;
                 
+                let profileSyncError = null;
                 if (data && data.user) {
-                    await registerProfile(data.user.id, nickname, favTeam);
+                    try {
+                        await registerProfile(data.user.id, nickname, favTeam);
+                    } catch(profileErr) {
+                        profileSyncError = profileErr.message;
+                    }
                 }
 
-                alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
+                if (profileSyncError) {
+                    alert(`✉️ 회원가입이 완료되었습니다!\n\n⚠️ 단, 프로필 데이터를 서버와 실시간 동기화하지 못했습니다.\n(사유: ${profileSyncError})\n현재 오프라인 로컬 프로필로 가입되었습니다.`);
+                } else {
+                    alert("✉️ 회원가입이 성공적으로 완료되었습니다! 즉시 로그인해 보세요.");
+                }
                 switchAuthTab('login');
                 const loginNickInput = document.getElementById('login-nickname');
                 if (loginNickInput) loginNickInput.value = nickname;
@@ -732,14 +761,19 @@ function setupAuthEvents() {
                         try {
                             const nickname = state.user.user_metadata?.nickname || '';
                             const role = state.adminMode ? 'admin' : 'user';
-                            await sbClient.from('profiles').upsert({
+                            const { error: upsertErr } = await sbClient.from('profiles').upsert({
                                 id: state.user.id,
                                 nickname,
                                 fav_team: newFavTeam,
                                 role
                             });
+                            if (upsertErr) throw upsertErr;
                         } catch (e) {
                             console.warn("Profiles table upsert failed during team update:", e);
+                            alert(`⚠️ 선호팀 정보가 로컬 기기에서만 임시 변경되었습니다.\n서버 동기화 실패 사유: ${e.message || e}`);
+                            updateAuthUI();
+                            renderMainContent();
+                            return;
                         }
                     }
                     
@@ -2349,6 +2383,14 @@ async function loadUserProfiles() {
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-mutedtext">불러오는 중...</td></tr>';
     
+    const warningEl = document.getElementById('admin-user-sync-warning');
+    if (warningEl) {
+        warningEl.classList.add('hidden');
+        warningEl.innerHTML = '';
+        // Reset to red alert class styling
+        warningEl.className = "hidden bg-red-950/40 border border-red-500/30 text-red-400 text-xs px-4 py-3 rounded-xl flex items-center gap-2 font-medium";
+    }
+
     let profiles = [];
     const offlineUsers = JSON.parse(localStorage.getItem('90plus_offline_users') || '[]');
     
@@ -2377,9 +2419,17 @@ async function loadUserProfiles() {
         } catch(e) {
             console.warn("Supabase profiles fetch failed, fallback to local users:", e);
             profiles = offlineUsers;
+            if (warningEl) {
+                warningEl.innerHTML = `<span>⚠️</span> [실시간 데이터베이스 연동 실패] 사유: ${e.message || e}. 현재 로컬 브라우저에 임시 저장된 회원 정보만 출력합니다.`;
+                warningEl.classList.remove('hidden');
+            }
         }
     } else {
         profiles = offlineUsers;
+        if (warningEl) {
+            warningEl.innerHTML = `<span>🔌</span> [오프라인 모드] 로컬 기기에 임시 가입된 회원 계정만 조회할 수 있습니다.`;
+            warningEl.className = "bg-teal-950/40 border border-teal-500/30 text-teal-400 text-xs px-4 py-3 rounded-xl flex items-center gap-2 font-medium";
+        }
     }
 
     if (profiles.length === 0) {
@@ -2438,6 +2488,9 @@ window.manageToggleRole = async function(userId, nickname, currentRole) {
         localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
     }
 
+    let dbSuccess = true;
+    let dbErrorMsg = "";
+
     // Update Supabase profiles table
     if (sbClient) {
         try {
@@ -2448,10 +2501,16 @@ window.manageToggleRole = async function(userId, nickname, currentRole) {
             if (error) throw error;
         } catch(e) {
             console.warn("Supabase profiles table role update failed:", e);
+            dbSuccess = false;
+            dbErrorMsg = e.message || e;
         }
     }
 
-    alert(`👤 '${nickname}' 회원의 권한이 성공적으로 변경되었습니다.`);
+    if (dbSuccess) {
+        alert(`👤 '${nickname}' 회원의 권한이 성공적으로 변경되었습니다.`);
+    } else {
+        alert(`⚠️ [데이터베이스 연동 실패] '${nickname}' 회원의 권한이 로컬 기기에서만 임시 변경되었습니다.\n서버 에러: ${dbErrorMsg}`);
+    }
     loadUserProfiles();
 };
 
@@ -2463,6 +2522,9 @@ window.manageDeleteUser = async function(userId, nickname) {
     offlineUsers = offlineUsers.filter(u => u.id !== userId && u.nickname !== nickname);
     localStorage.setItem('90plus_offline_users', JSON.stringify(offlineUsers));
 
+    let dbSuccess = true;
+    let dbErrorMsg = "";
+
     // Update Supabase profiles table
     if (sbClient) {
         try {
@@ -2473,10 +2535,16 @@ window.manageDeleteUser = async function(userId, nickname) {
             if (error) throw error;
         } catch(e) {
             console.warn("Supabase profiles table user deletion failed:", e);
+            dbSuccess = false;
+            dbErrorMsg = e.message || e;
         }
     }
 
-    alert(`🗑️ '${nickname}' 회원이 완전히 탈퇴 처리되었습니다.`);
+    if (dbSuccess) {
+        alert(`🗑️ '${nickname}' 회원이 완전히 탈퇴 처리되었습니다.`);
+    } else {
+        alert(`⚠️ [데이터베이스 연동 실패] '${nickname}' 회원이 로컬 기기에서만 임시 탈퇴되었습니다.\n서버 에러: ${dbErrorMsg}`);
+    }
     loadUserProfiles();
 };
 
