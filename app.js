@@ -19,6 +19,58 @@ const state = {
     adminMode: false    // Admin authorization toggle
 };
 
+// 2.2. Premium Floating Toast Notification Engine
+function showToast(message, type = 'info', duration = 3500) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    else if (type === 'warning') icon = '⚠️';
+    else if (type === 'error') icon = '❌';
+
+    toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <div class="toast-content">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-destroy after duration
+    setTimeout(() => {
+        toast.classList.add('toast-fade-out');
+        toast.addEventListener('transitionend', () => {
+            toast.remove();
+        });
+    }, duration);
+}
+
+// 2.3. Override Native Alert System with Premium Toast
+window.alert = function(message) {
+    let type = 'info';
+    
+    // Fallback if message is not string
+    const msgStr = String(message);
+    const lower = msgStr.toLowerCase();
+    
+    if (lower.includes('성공') || lower.includes('완료') || lower.includes('환영') || lower.includes('here we go') || lower.includes('복사') || lower.includes('성공적으로')) {
+        type = 'success';
+    } else if (lower.includes('실패') || lower.includes('오류') || lower.includes('에러') || lower.includes('예약된') || lower.includes('제한')) {
+        type = 'error';
+    } else if (lower.includes('임시') || lower.includes('오프라인') || lower.includes('서버 연결') || lower.includes('지연') || lower.includes('단,')) {
+        type = 'warning';
+    }
+    
+    showToast(msgStr, type);
+};
+
 // 2.1. Offline Real-time Tab Synchronization
 const offlineSyncChannel = window.BroadcastChannel ? new BroadcastChannel('90plus_offline_sync') : null;
 if (offlineSyncChannel) {
@@ -2387,8 +2439,6 @@ async function loadUserProfiles() {
     if (warningEl) {
         warningEl.classList.add('hidden');
         warningEl.innerHTML = '';
-        // Reset to red alert class styling
-        warningEl.className = "hidden bg-red-950/40 border border-red-500/30 text-red-400 text-xs px-4 py-3 rounded-xl flex items-center gap-2 font-medium";
     }
 
     let profiles = [];
@@ -2416,19 +2466,27 @@ async function loadUserProfiles() {
                     profiles.push(u);
                 }
             });
+
+            if (warningEl) {
+                warningEl.innerHTML = `<span>●</span> 실시간 계정 동기화: 데이터베이스 연결 완료`;
+                warningEl.className = "bg-emerald-950/30 border border-emerald-500/20 text-emerald-400 text-[11px] px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold";
+                warningEl.classList.remove('hidden');
+            }
         } catch(e) {
             console.warn("Supabase profiles fetch failed, fallback to local users:", e);
             profiles = offlineUsers;
             if (warningEl) {
-                warningEl.innerHTML = `<span>⚠️</span> [실시간 데이터베이스 연동 실패] 사유: ${e.message || e}. 현재 로컬 브라우저에 임시 저장된 회원 정보만 출력합니다.`;
+                warningEl.innerHTML = `<span>●</span> 실시간 계정 동기화: 로컬 저장소 모드 (사유: ${e.message || e})`;
+                warningEl.className = "bg-amber-950/30 border border-amber-500/20 text-amber-400 text-[11px] px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold";
                 warningEl.classList.remove('hidden');
             }
         }
     } else {
         profiles = offlineUsers;
         if (warningEl) {
-            warningEl.innerHTML = `<span>🔌</span> [오프라인 모드] 로컬 기기에 임시 가입된 회원 계정만 조회할 수 있습니다.`;
-            warningEl.className = "bg-teal-950/40 border border-teal-500/30 text-teal-400 text-xs px-4 py-3 rounded-xl flex items-center gap-2 font-medium";
+            warningEl.innerHTML = `<span>●</span> 실시간 계정 동기화: 오프라인 보관소 모드`;
+            warningEl.className = "bg-teal-950/30 border border-teal-500/20 text-teal-400 text-[11px] px-3.5 py-2 rounded-xl flex items-center gap-2 font-semibold";
+            warningEl.classList.remove('hidden');
         }
     }
 

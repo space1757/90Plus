@@ -204,3 +204,91 @@ body {
   pointer-events: auto;
 }
 
+/* Premium Toast Notification System */
+#toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  pointer-events: none;
+}
+
+/* Mobile responsive alignment */
+@media (max-width: 640px) {
+  #toast-container {
+    top: auto;
+    bottom: 24px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 90%;
+  }
+}
+
+.toast-message {
+  pointer-events: auto;
+  background: rgba(22, 30, 49, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(36, 47, 77, 0.7);
+  border-radius: 16px;
+  padding: 16px;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: toast-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@keyframes toast-slide-in {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.toast-message.toast-fade-out {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+/* Toast State Badges / Left border accents */
+.toast-message.success {
+  border-left: 4px solid #10b981; /* Emerald */
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
+}
+.toast-message.warning {
+  border-left: 4px solid #f59e0b; /* Amber */
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.15);
+}
+.toast-message.error {
+  border-left: 4px solid #ef4444; /* Rose */
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);
+}
+.toast-message.info {
+  border-left: 4px solid var(--point-color); /* Neon Yellow */
+  box-shadow: 0 10px 30px rgba(212, 255, 0, 0.15);
+}
+
+.toast-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toast-content {
+  flex: 1;
+  font-weight: 600;
+  white-space: pre-line;
+}
+
