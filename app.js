@@ -471,6 +471,54 @@ function setupAuthEvents() {
 
             // Intercept static admin credentials
             if (nickname.toLowerCase() === 'adminofficial' && password === '090829') {
+                if (sbClient) {
+                    try {
+                        let authData = null;
+                        
+                        // 1. Try to sign in using Supabase Auth
+                        const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+                        
+                        if (error) {
+                            // 2. If user not found (e.g. status 400 or credentials mismatch), attempt auto-signUp
+                            if (error.status === 400 || error.message.toLowerCase().includes("invalid login credentials")) {
+                                console.log("Admin account not found in Auth. Attempting auto-registration...");
+                                const signUpRes = await sbClient.auth.signUp({
+                                    email,
+                                    password,
+                                    options: {
+                                        data: { nickname: 'adminofficial', role: 'admin', fav_team: '' }
+                                    }
+                                });
+                                if (signUpRes.error) throw signUpRes.error;
+                                
+                                // Retry sign in
+                                const retryRes = await sbClient.auth.signInWithPassword({ email, password });
+                                if (retryRes.error) throw retryRes.error;
+                                authData = retryRes.data;
+                            } else {
+                                throw error;
+                            }
+                        } else {
+                            authData = data;
+                        }
+
+                        if (authData && authData.user) {
+                            state.user = authData.user;
+                            state.adminMode = true;
+                            localStorage.setItem('90plus_offline_user', JSON.stringify(authData.user));
+                            await registerProfile(authData.user.id, 'adminofficial', '');
+                            updateAuthUI();
+                            alert("🔓 [온라인] 관리자 계정 로그인 성공! 실시간 데이터베이스에 즉시 반영됩니다.");
+                            authBackdrop.classList.remove('open');
+                            loadNews();
+                            return;
+                        }
+                    } catch (authErr) {
+                        console.warn("Supabase Admin Auth login failed, falling back to offline mock:", authErr);
+                        // Fall back to offline flow below
+                    }
+                }
+
                 const adminUser = {
                     id: 'admin-fixed-id',
                     email: email,
@@ -483,7 +531,7 @@ function setupAuthEvents() {
                 state.user = adminUser;
                 state.adminMode = true;
                 updateAuthUI();
-                alert("🔓 관리자 계정 로그인 성공!");
+                alert("🔓 관리자 계정 로그인 성공! (오프라인 모드)");
                 authBackdrop.classList.remove('open');
                 loadNews();
                 return;
@@ -1193,7 +1241,7 @@ function setupAdminPanelEvents() {
                 currentOffline.unshift(newArticle);
                 localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
                 
-                alert("🏆 [서버 연결 실패] 뉴스가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
+                alert(`🏆 [발행 실패] 데이터베이스에 뉴스를 발행하지 못했습니다.\n사유: ${err.message || err}\n\n뉴스가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!`);
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminNews.reset();
                 initTagSelectors();
@@ -1314,7 +1362,7 @@ function setupAdminPanelEvents() {
                 currentOffline.unshift(newTransfer);
                 localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
 
-                alert("🚨 [서버 연결 실패] 이적 정보가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
+                alert(`🚨 [발행 실패] 데이터베이스에 이적 정보를 발행하지 못했습니다.\n사유: ${err.message || err}\n\n이적 정보가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!`);
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminTransfer.reset();
                 initTagSelectors();
@@ -1428,7 +1476,7 @@ function setupAdminPanelEvents() {
                 currentOffline.unshift(newMatch);
                 localStorage.setItem('90plus_offline_news', JSON.stringify(currentOffline));
 
-                alert("⚽ [서버 연결 실패] 경기 결과가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!");
+                alert(`⚽ [발행 실패] 데이터베이스에 경기 결과를 발행하지 못했습니다.\n사유: ${err.message || err}\n\n경기 결과가 로컬 브라우저에 임시(오프라인)로 발행되었습니다!`);
                 document.getElementById('admin-backdrop').classList.remove('open');
                 formAdminMatchResult.reset();
                 
