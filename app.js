@@ -941,10 +941,13 @@ async function deleteArticle(id, event) {
             alert("🗑️ 기사가 완전히 삭제되어 다시는 표시되지 않습니다.");
         } else if (sbClient) {
             // Live Supabase DB News deletion
-            const { error } = await sbClient
-                .from('football_news')
-                .delete()
-                .eq('id', id);
+            const { error } = await withTimeout(
+                sbClient
+                    .from('football_news')
+                    .delete()
+                    .eq('id', id),
+                3500
+            );
 
             if (error) throw error;
             alert("🗑️ 기사가 데이터베이스에서 완전히 삭제되었습니다!");
@@ -1422,15 +1425,18 @@ function setupAdminPanelEvents() {
             }
 
             try {
-                const { error } = await sbClient
-                    .from('football_news')
-                    .insert({
-                        title: jsonString,
-                        reporter: nickname,
-                        tier: 1,
-                        is_here_we_go: false,
-                        category: "경기결과"
-                    });
+                const { error } = await withTimeout(
+                    sbClient
+                        .from('football_news')
+                        .insert({
+                            title: jsonString,
+                            reporter: nickname,
+                            tier: 1,
+                            is_here_we_go: false,
+                            category: "경기결과"
+                        }),
+                    3500
+                );
 
                 if (error) throw error;
 
